@@ -27,29 +27,29 @@ TEST_CASE("right consumption", "[protocol]") {
     }
     auto b_from = Iterator::begin(buff), b_to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(b_from, b_to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
 
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == full_message.size());
 
-    auto *array = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto *array = std::get_if<r::markers::array_holder_t<Iterator>>(
         &positive_parse_result.result);
     REQUIRE(array != nullptr);
     REQUIRE(array->elements.size() == 3);
 
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message"), array->elements[0]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("some-channel1"),
         array->elements[1]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a1"),
         array->elements[2]));
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&array->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&array->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&array->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[2]) !=
             nullptr);
 }
 
@@ -68,8 +68,8 @@ TEST_CASE("using strembuff", "[protocol]") {
     auto from = Iterator::begin(const_buff), to = Iterator::end(const_buff);
     auto parsed_result = r::Protocol::parse(from, to);
 
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("OK"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("OK"),
                                  positive_parse_result.result));
 }

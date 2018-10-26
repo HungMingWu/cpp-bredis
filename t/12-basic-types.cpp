@@ -65,38 +65,38 @@ TEST_CASE("ping", "[connection]") {
     };
     std::vector<read_callback_t> callbacks{
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            REQUIRE(boost::get<r::extracts::int_t>(extract) == 0);
+            auto extract = std::visit(Extractor(), r.result);
+            REQUIRE(std::get<r::extracts::int_t>(extract) == 0);
             REQUIRE(order == 0);
         },
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            REQUIRE(boost::get<r::extracts::nil_t>(&extract));
+            auto extract = std::visit(Extractor(), r.result);
+            REQUIRE(std::get_if<r::extracts::nil_t>(&extract));
             REQUIRE(order == 1);
         },
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            REQUIRE(boost::get<r::extracts::string_t>(extract).str == "OK");
+            auto extract = std::visit(Extractor(), r.result);
+            REQUIRE(std::get<r::extracts::string_t>(extract).str == "OK");
             REQUIRE(order == 2);
         },
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            REQUIRE(boost::get<r::extracts::string_t>(extract).str == "value");
+            auto extract = std::visit(Extractor(), r.result);
+            REQUIRE(std::get<r::extracts::string_t>(extract).str == "value");
             REQUIRE(order == 3);
         },
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            REQUIRE(boost::get<r::extracts::error_t>(extract).str ==
+            auto extract = std::visit(Extractor(), r.result);
+            REQUIRE(std::get<r::extracts::error_t>(extract).str ==
                     "ERR wrong number of arguments for 'llen' command");
             REQUIRE(order == 4);
         },
         [&](const boost::system::error_code &error_code, ParseResult &&r) {
             REQUIRE(order == 5);
-            auto extract = boost::apply_visitor(Extractor(), r.result);
-            auto &arr = boost::get<r::extracts::array_holder_t>(extract);
+            auto extract = std::visit(Extractor(), r.result);
+            auto &arr = std::get<r::extracts::array_holder_t>(extract);
             REQUIRE(arr.elements.size() == 2);
-            auto &c1 = boost::get<r::extracts::string_t>(arr.elements[0]).str;
-            auto &c2 = boost::get<r::extracts::string_t>(arr.elements[1]).str;
+            auto &c1 = std::get<r::extracts::string_t>(arr.elements[0]).str;
+            auto &c2 = std::get<r::extracts::string_t>(arr.elements[1]).str;
 
             REQUIRE(boost::lexical_cast<r::extracts::int_t>(c1) >= 0);
             REQUIRE(boost::lexical_cast<r::extracts::int_t>(c2) >= 0);

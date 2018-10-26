@@ -55,7 +55,7 @@ struct json_payload {
 using option_t = boost::optional<json_payload>;
 
 template <typename Iterator>
-struct json_extractor : public boost::static_visitor<option_t> {
+struct json_extractor {
     template <typename T> option_t operator()(const T &value) const {
         return option_t{};
     }
@@ -67,9 +67,9 @@ struct json_extractor : public boost::static_visitor<option_t> {
         // return back boost::optional and channel name
         if (value.elements.size() == 3) {
             const auto *channel =
-                boost::get<r::markers::string_t<Iterator>>(&value.elements[1]);
+                std::get_if<r::markers::string_t<Iterator>>(&value.elements[1]);
             const auto *payload =
-                boost::get<r::markers::string_t<Iterator>>(&value.elements[2]);
+                std::get_if<r::markers::string_t<Iterator>>(&value.elements[2]);
             if (channel && payload) {
                 std::string err;
                 picojson::value v;
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
                     return;
                 }
 
-                bool confimed = boost::apply_visitor(check_subscription,
+                bool confimed = std::visit(check_subscription,
                                                      parse_result.result);
                 if (!confimed) {
                     std::cout << "subscription was not confirmed\n";
@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
             // extract the JSON from message payload
 
             json_extractor<Iterator> extract;
-            auto payload = boost::apply_visitor(extract, parse_result.result);
+            auto payload = std::visit(extract, parse_result.result);
 
             if (payload) {
                 std::cout << "on channel '" << payload.get().channel

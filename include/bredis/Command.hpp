@@ -7,9 +7,9 @@
 #pragma once
 
 #include <boost/utility/string_ref.hpp>
-#include <boost/variant.hpp>
 #include <type_traits>
 #include <vector>
+#include <variant>
 
 #include "Result.hpp"
 
@@ -47,6 +47,6 @@ struct single_command_t {
 
 using command_container_t = std::vector<single_command_t>;
 
-using command_wrapper_t = boost::variant<single_command_t, command_container_t>;
+using command_wrapper_t = std::variant<single_command_t, command_container_t>;
 
 } // namespace bredis

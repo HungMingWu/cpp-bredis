@@ -11,10 +11,10 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <variant>
 
 #include <boost/asio/buffers_iterator.hpp>
 #include <boost/utility/string_ref.hpp>
-#include <boost/variant.hpp>
 
 #include "Error.hpp"
 #include "Markers.hpp"
@@ -57,7 +57,7 @@ using parse_result_mapper_t =
 
 template <typename Iterator, typename Policy>
 using parse_result_t =
-    boost::variant<not_enough_data_t, parse_result_mapper_t<Iterator, Policy>,
+    std::variant<not_enough_data_t, parse_result_mapper_t<Iterator, Policy>,
                    protocol_error_t>;
 
 } // namespace bredis

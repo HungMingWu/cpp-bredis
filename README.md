@@ -476,12 +476,11 @@ Namespace: `bredis::marker_helpers`
 
 #### `stringizer<Iterator>`
 
-Apply this `boost::static_visitor<std::string>`s to
-stringize the result (can be useful for debugging).
+Stringize the result (can be useful for debugging).
 
 #### `equality<Iterator>`
 
-Apply this `boost::static_visitor<bool>` to find a *string* in the
+Find a *string* in the
 parsed results (the markup can point to integer types, but as it
 is transferred as a string anyway, it still can be founded as string
 too).
@@ -490,7 +489,7 @@ Constructor: `equality<Iterator>(std::string str)`
 
 #### `check_subscription<Iterator>`
 
-This `boost::static_visitor<bool>` helper is used to check
+This helper is used to check
 whether the redis reply confirms one of the requested channels. Hence,
 the constructor is `check_subscription(single_command_t)`.
 

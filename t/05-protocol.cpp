@@ -18,9 +18,9 @@ TEST_CASE("simple string", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("OK"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("OK"),
                                  positive_parse_result.result));
 };
 
@@ -29,7 +29,7 @@ TEST_CASE("empty string", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::not_enough_data_t *r = boost::get<r::not_enough_data_t>(&parsed_result);
+    r::not_enough_data_t *r = std::get_if<r::not_enough_data_t>(&parsed_result);
     REQUIRE(r != nullptr);
 };
 
@@ -38,7 +38,7 @@ TEST_CASE("non-finished ", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::not_enough_data_t *r = boost::get<r::not_enough_data_t>(&parsed_result);
+    r::not_enough_data_t *r = std::get_if<r::not_enough_data_t>(&parsed_result);
     REQUIRE(r != nullptr);
 };
 
@@ -47,7 +47,7 @@ TEST_CASE("wrong start marker", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Wrong introduction");
 };
 
@@ -56,13 +56,13 @@ TEST_CASE("number-like", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::get<r::markers::int_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(
                 &positive_parse_result.result) != nullptr);
     REQUIRE(
-        boost::apply_visitor(r::marker_helpers::equality<Iterator>("-55abc"),
+        std::visit(r::marker_helpers::equality<Iterator>("-55abc"),
                              positive_parse_result.result));
 };
 
@@ -71,7 +71,7 @@ TEST_CASE("no enough data for number", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::not_enough_data_t *r = boost::get<r::not_enough_data_t>(&parsed_result);
+    r::not_enough_data_t *r = std::get_if<r::not_enough_data_t>(&parsed_result);
     REQUIRE(r != nullptr);
 };
 
@@ -80,12 +80,12 @@ TEST_CASE("simple error", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::get<r::markers::error_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::error_t<Iterator>>(
                 &positive_parse_result.result) != nullptr);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("Ooops"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("Ooops"),
                                  positive_parse_result.result));
 };
 
@@ -94,7 +94,7 @@ TEST_CASE("no enoght data for error", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::not_enough_data_t *r = boost::get<r::not_enough_data_t>(&parsed_result);
+    r::not_enough_data_t *r = std::get_if<r::not_enough_data_t>(&parsed_result);
     REQUIRE(r != nullptr);
 };
 
@@ -103,14 +103,14 @@ TEST_CASE("nil", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
 
     auto *nil =
-        boost::get<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
+        std::get_if<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
     REQUIRE(nil != nullptr);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("-1"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("-1"),
                                  positive_parse_result.result));
 };
 
@@ -119,7 +119,7 @@ TEST_CASE("malformed bulk string", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Unacceptable count value");
 };
 
@@ -128,12 +128,12 @@ TEST_CASE("some bulk string", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(
                 &positive_parse_result.result) != nullptr);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("some"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("some"),
                                  positive_parse_result.result));
 };
 
@@ -142,12 +142,12 @@ TEST_CASE("empty bulk string", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(
                 &positive_parse_result.result) != nullptr);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>(""),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>(""),
                                  positive_parse_result.result));
 };
 
@@ -156,7 +156,7 @@ TEST_CASE("patrial bulk string(1)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("patrial bulk string(2)", "[protocol]") {
@@ -164,7 +164,7 @@ TEST_CASE("patrial bulk string(2)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("patrial bulk string(3)", "[protocol]") {
@@ -172,7 +172,7 @@ TEST_CASE("patrial bulk string(3)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("patrial bulk string(4)", "[protocol]") {
@@ -181,7 +181,7 @@ TEST_CASE("patrial bulk string(4)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse<Iterator, Policy>(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("malformed bulk string(2)", "[protocol]") {
@@ -189,7 +189,7 @@ TEST_CASE("malformed bulk string(2)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Terminator for bulk string not found");
 };
 
@@ -199,7 +199,7 @@ TEST_CASE("malformed bulk string(3)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse<Iterator, Policy>(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Terminator for bulk string not found");
 };
 
@@ -209,7 +209,7 @@ TEST_CASE("malformed bulk string(4)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse<Iterator, Policy>(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Cannot convert count to number");
 };
 
@@ -218,10 +218,10 @@ TEST_CASE("empty array", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    auto *array_holder = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto *array_holder = std::get_if<r::markers::array_holder_t<Iterator>>(
         &positive_parse_result.result);
     REQUIRE(array_holder != nullptr);
     REQUIRE(array_holder->elements.size() == 0);
@@ -232,13 +232,13 @@ TEST_CASE("null array", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
     auto *nil =
-        boost::get<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
+        std::get_if<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
     REQUIRE(nil != nullptr);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("-1"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("-1"),
                                  positive_parse_result.result));
 };
 
@@ -247,7 +247,7 @@ TEST_CASE("malformed array", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Unacceptable count value");
 };
 
@@ -256,7 +256,7 @@ TEST_CASE("malformed array (2)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    r::protocol_error_t *r = boost::get<r::protocol_error_t>(&parsed_result);
+    r::protocol_error_t *r = std::get_if<r::protocol_error_t>(&parsed_result);
     REQUIRE(r->code.message() == "Cannot convert count to number");
 };
 
@@ -265,7 +265,7 @@ TEST_CASE("patrial array(1)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("patrial array(2)", "[protocol]") {
@@ -273,7 +273,7 @@ TEST_CASE("patrial array(2)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("patrial array(3)", "[protocol]") {
@@ -282,7 +282,7 @@ TEST_CASE("patrial array(3)", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse<Iterator, Policy>(from, to);
-    REQUIRE(boost::get<r::not_enough_data_t>(&parsed_result) != nullptr);
+    REQUIRE(std::get_if<r::not_enough_data_t>(&parsed_result) != nullptr);
 };
 
 TEST_CASE("array: string, int, nil", "[protocol]") {
@@ -290,22 +290,22 @@ TEST_CASE("array: string, int, nil", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
 
-    auto *array = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto *array = std::get_if<r::markers::array_holder_t<Iterator>>(
         &positive_parse_result.result);
     REQUIRE(array != nullptr);
     REQUIRE(array->elements.size() == 3);
 
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("some"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("some"),
                                  array->elements[0]));
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("5"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("5"),
                                  array->elements[1]));
-    REQUIRE(boost::get<r::markers::int_t<Iterator>>(&array->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&array->elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::nil_t<Iterator>>(&array->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::nil_t<Iterator>>(&array->elements[2]) !=
             nullptr);
 };
 
@@ -314,41 +314,41 @@ TEST_CASE("array of arrays: [int, int, int,], [str,err] ", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
 
-    auto *array = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto *array = std::get_if<r::markers::array_holder_t<Iterator>>(
         &positive_parse_result.result);
     REQUIRE(array != nullptr);
     REQUIRE(array->elements.size() == 2);
 
     auto *a1 =
-        boost::get<r::markers::array_holder_t<Iterator>>(&array->elements[0]);
+        std::get_if<r::markers::array_holder_t<Iterator>>(&array->elements[0]);
     REQUIRE(a1->elements.size() == 3);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                  a1->elements[0]));
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("2"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("2"),
                                  a1->elements[1]));
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("3"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("3"),
                                  a1->elements[2]));
-    REQUIRE(boost::get<r::markers::int_t<Iterator>>(&a1->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::int_t<Iterator>>(&a1->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::int_t<Iterator>>(&a1->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[2]) !=
             nullptr);
 
     auto *a2 =
-        boost::get<r::markers::array_holder_t<Iterator>>(&array->elements[1]);
+        std::get_if<r::markers::array_holder_t<Iterator>>(&array->elements[1]);
     REQUIRE(a2->elements.size() == 2);
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("Foo"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("Foo"),
                                  a2->elements[0]));
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("Bar"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("Bar"),
                                  a2->elements[1]));
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a2->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2->elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::error_t<Iterator>>(&a2->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::error_t<Iterator>>(&a2->elements[1]) !=
             nullptr);
 };
 
@@ -359,7 +359,7 @@ TEST_CASE("right consumption", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size() / 2);
 }
@@ -372,73 +372,73 @@ TEST_CASE("overfilled buffer", "[protocol]") {
     Buffer buff(ok.c_str(), ok.size());
     auto from = Iterator::begin(buff), to = Iterator::end(buff);
     auto parsed_result = r::Protocol::parse(from, to);
-    auto positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == 54);
 
-    auto &a1 = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto &a1 = std::get<r::markers::array_holder_t<Iterator>>(
         positive_parse_result.result);
     REQUIRE(a1.elements.size() == 3);
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message"), a1.elements[0]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("some-channel1"),
         a1.elements[1]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a1"), a1.elements[2]));
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a1.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a1.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a1.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[2]) !=
             nullptr);
 
     buff = Buffer(ok.c_str() + 54, ok.size() - 54);
     from = Iterator::begin(buff), to = Iterator::end(buff);
     parsed_result = r::Protocol::parse(from, to);
-    positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == 54);
 
-    auto &a2 = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto &a2 = std::get<r::markers::array_holder_t<Iterator>>(
         positive_parse_result.result);
     REQUIRE(a2.elements.size() == 3);
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message"), a2.elements[0]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("some-channel1"),
         a2.elements[1]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a2"), a2.elements[2]));
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a2.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a2.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a2.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[2]) !=
             nullptr);
 
     buff = Buffer(ok.c_str() + 54 * 2, ok.size() - 54 * 2);
     from = Iterator::begin(buff), to = Iterator::end(buff);
     parsed_result = r::Protocol::parse(from, to);
-    positive_parse_result = boost::get<positive_result_t>(parsed_result);
+    positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == 47);
 
-    auto &a3 = boost::get<r::markers::array_holder_t<Iterator>>(
+    auto &a3 = std::get<r::markers::array_holder_t<Iterator>>(
         positive_parse_result.result);
     REQUIRE(a3.elements.size() == 3);
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message"), a3.elements[0]));
-    REQUIRE(boost::apply_visitor(
+    REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("some-channel2"),
         a3.elements[1]));
-    REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("last"),
+    REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("last"),
                                  a3.elements[2]));
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a3.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[0]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a3.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[1]) !=
             nullptr);
-    REQUIRE(boost::get<r::markers::string_t<Iterator>>(&a3.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[2]) !=
             nullptr);
 }
 

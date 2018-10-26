@@ -62,22 +62,22 @@ TEST_CASE("transaction", "[connection]") {
         REQUIRE(!error_code);
 
         auto &replies =
-            boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+            std::get<r::markers::array_holder_t<Iterator>>(r.result);
         REQUIRE(replies.elements.size() == tx_commands.size());
 
         auto eq_OK = r::marker_helpers::equality<Iterator>("OK");
         auto eq_QUEUED = r::marker_helpers::equality<Iterator>("QUEUED");
         REQUIRE(replies.elements.size() == 4);
-        REQUIRE(boost::apply_visitor(eq_OK, replies.elements[0]));
-        REQUIRE(boost::apply_visitor(eq_QUEUED, replies.elements[1]));
-        REQUIRE(boost::apply_visitor(eq_QUEUED, replies.elements[2]));
+        REQUIRE(std::visit(eq_OK, replies.elements[0]));
+        REQUIRE(std::visit(eq_QUEUED, replies.elements[1]));
+        REQUIRE(std::visit(eq_QUEUED, replies.elements[2]));
 
-        auto &tx_replies = boost::get<r::markers::array_holder_t<Iterator>>(
+        auto &tx_replies = std::get<r::markers::array_holder_t<Iterator>>(
             replies.elements[3]);
         REQUIRE(tx_replies.elements.size() == 2);
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                      tx_replies.elements[0]));
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                      tx_replies.elements[1]));
 
         completion_promise.set_value();

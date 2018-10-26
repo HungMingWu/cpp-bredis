@@ -18,8 +18,8 @@ TEST_CASE("string extraction", "[protocol]") {
                                           Iterator::end(buff)};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::string_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::string_t>(&r);
     REQUIRE(target);
     REQUIRE(target->str == source);
 }
@@ -31,8 +31,8 @@ TEST_CASE("error extraction", "[protocol]") {
         Iterator::begin(buff), Iterator::end(buff)}};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::error_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::error_t>(&r);
     REQUIRE(target);
     REQUIRE(target->str == source);
 }
@@ -44,8 +44,8 @@ TEST_CASE("nil extraction", "[protocol]") {
         Iterator::begin(buff), Iterator::end(buff)}};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::nil_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::nil_t>(&r);
     REQUIRE(target);
 }
 
@@ -56,8 +56,8 @@ TEST_CASE("simple int extraction", "[protocol]") {
         Iterator::begin(buff), Iterator::end(buff)}};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::int_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::int_t>(&r);
     REQUIRE(target);
     REQUIRE(*target == 5);
 }
@@ -69,8 +69,8 @@ TEST_CASE("large int extraction", "[protocol]") {
         Iterator::begin(buff), Iterator::end(buff)}};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::int_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::int_t>(&r);
     REQUIRE(target);
     REQUIRE(*target == 9223372036854775801);
 }
@@ -82,8 +82,8 @@ TEST_CASE("negative int extraction", "[protocol]") {
         Iterator::begin(buff), Iterator::end(buff)}};
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::int_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::int_t>(&r);
     REQUIRE(target);
     REQUIRE(*target == -123);
 }
@@ -96,7 +96,7 @@ TEST_CASE("NaN int extraction attempt", "[protocol]") {
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
     REQUIRE_THROWS(
-        boost::apply_visitor(r::extractor<Iterator>(), erased_marker));
+        std::visit(r::extractor<Iterator>(), erased_marker));
 }
 
 TEST_CASE("too large int extraction attempt", "[protocol]") {
@@ -107,7 +107,7 @@ TEST_CASE("too large int extraction attempt", "[protocol]") {
     r::markers::redis_result_t<Iterator> erased_marker{marker};
 
     REQUIRE_THROWS(
-        boost::apply_visitor(r::extractor<Iterator>(), erased_marker));
+        std::visit(r::extractor<Iterator>(), erased_marker));
 }
 
 TEST_CASE("vector extraction", "[protocol]") {
@@ -124,12 +124,12 @@ TEST_CASE("vector extraction", "[protocol]") {
     r::markers::redis_result_t<Iterator> erased_marker{
         r::markers::array_holder_t<Iterator>{{marker_1, marker_2}}};
 
-    auto r = boost::apply_visitor(r::extractor<Iterator>(), erased_marker);
-    auto *target = boost::get<r::extracts::array_holder_t>(&r);
+    auto r = std::visit(r::extractor<Iterator>(), erased_marker);
+    auto *target = std::get_if<r::extracts::array_holder_t>(&r);
     REQUIRE(target);
     REQUIRE(target->elements.size() == 2);
-    auto *t1 = boost::get<r::extracts::string_t>(&target->elements[0]);
-    auto *t2 = boost::get<r::extracts::int_t>(&target->elements[1]);
+    auto *t1 = std::get_if<r::extracts::string_t>(&target->elements[0]);
+    auto *t2 = std::get_if<r::extracts::int_t>(&target->elements[1]);
     REQUIRE(t1);
     REQUIRE(t2);
     REQUIRE(t1->str == "src");

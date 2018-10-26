@@ -56,7 +56,7 @@ using string_wrapper_t = std::reference_wrapper<const std::string>;
 using optional_string_t =
     boost::optional<std::pair<string_wrapper_t, string_wrapper_t>>;
 
-struct payload_extractor : public boost::static_visitor<optional_string_t> {
+struct payload_extractor {
     template <typename T> optional_string_t operator()(const T &value) const {
         return optional_string_t{};
     }
@@ -68,10 +68,10 @@ struct payload_extractor : public boost::static_visitor<optional_string_t> {
         if (value.elements.size() == 3) {
             const auto &channel = value.elements[1];
             const auto *channel_data =
-                boost::get<r::extracts::string_t>(&channel);
+                std::get_if<r::extracts::string_t>(&channel);
             const auto &payload = value.elements[2];
             const auto *payload_data =
-                boost::get<r::extracts::string_t>(&payload);
+                std::get_if<r::extracts::string_t>(&payload);
             if (channel_data && payload_data) {
                 // std::cout << "[debug3]" << payload_ref << "\n";
                 string_wrapper_t channel_ref(channel_data->str);
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
             auto parse_result = c.read(rx_buff);
 
             bool subscription_confirmed =
-                boost::apply_visitor(check_subscription, parse_result.result);
+                std::visit(check_subscription, parse_result.result);
             if (!subscription_confirmed) {
                 std::cout << "subscription for channel " << *it
                           << "was not confirmed\n";
@@ -152,14 +152,14 @@ int main(int argc, char **argv) {
             // blocks until new message
             auto parse_result = c.read(rx_buff);
             // extract (aka decouple from buffer / copy) result
-            auto extract = boost::apply_visitor(r::extractor<Iterator>(),
+            auto extract = std::visit(r::extractor<Iterator>(),
                                                 parse_result.result);
             // safe to consume buffer now
             rx_buff.consume(parse_result.consumed);
 
             // select the result in the form of
             // pair<const std::string&, const std::string&>
-            auto payload = boost::apply_visitor(payload_extractor(), extract);
+            auto payload = std::visit(payload_extractor(), extract);
             if (payload) {
                 // and finally print it
                 std::cout << "on channel '" << payload->first.get()

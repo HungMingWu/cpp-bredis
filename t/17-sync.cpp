@@ -44,7 +44,7 @@ TEST_CASE("ping", "[connection]") {
     auto equality = r::marker_helpers::equality<Iterator>("PONG");
     c.write("ping");
     auto parse_result = c.read(rx_buff);
-    REQUIRE(boost::apply_visitor(equality, parse_result.result));
+    REQUIRE(std::visit(equality, parse_result.result));
     rx_buff.consume(parse_result.consumed);
 
     /* overloads */
@@ -54,6 +54,6 @@ TEST_CASE("ping", "[connection]") {
 
     parse_result = c.read(rx_buff, ec);
     REQUIRE(!ec);
-    REQUIRE(boost::apply_visitor(equality, parse_result.result));
+    REQUIRE(std::visit(equality, parse_result.result));
     rx_buff.consume(parse_result.consumed);
 };

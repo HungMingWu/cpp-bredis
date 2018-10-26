@@ -6,8 +6,7 @@
 //
 #pragma once
 
-#include <boost/variant.hpp>
-#include <boost/variant/recursive_variant.hpp>
+#include <variant>
 
 namespace bredis {
 
@@ -37,12 +36,9 @@ template <typename Iterator> struct nil_t {
 template <typename Iterator> struct array_holder_t;
 
 template <typename Iterator>
-using array_wrapper_t = boost::recursive_wrapper<array_holder_t<Iterator>>;
-
-template <typename Iterator>
 using redis_result_t =
-    boost::variant<int_t<Iterator>, string_t<Iterator>, error_t<Iterator>,
-                   nil_t<Iterator>, array_wrapper_t<Iterator>>;
+    std::variant<int_t<Iterator>, string_t<Iterator>, error_t<Iterator>,
+                   nil_t<Iterator>, array_holder_t<Iterator>>;
 
 template <typename Iterator> struct array_holder_t {
     using iterator_t = Iterator;

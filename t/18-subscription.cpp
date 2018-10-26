@@ -65,11 +65,11 @@ TEST_CASE("subscription", "[connection]") {
 
         r::marker_helpers::check_subscription<Iterator> check_subscription{
             std::move(subscribe_cmd)};
-        REQUIRE(boost::apply_visitor(check_subscription, parse_result.result));
+        REQUIRE(std::visit(check_subscription, parse_result.result));
         rx_buff.consume(parse_result.consumed);
 
         parse_result = consumer.read(rx_buff);
-        REQUIRE(boost::apply_visitor(check_subscription, parse_result.result));
+        REQUIRE(std::visit(check_subscription, parse_result.result));
         rx_buff.consume(parse_result.consumed);
     }
 
@@ -83,27 +83,27 @@ TEST_CASE("subscription", "[connection]") {
         producer.write(
             r::single_command_t("publish", "some-channel1", "message-a1"));
         auto s_result = producer.read(rx_buff);
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(
             r::single_command_t("publish", "some-channel1", "message-a2"));
         s_result = producer.read(rx_buff);
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(
             r::single_command_t("publish", "some-channel3", "message-c"));
         s_result = producer.read(rx_buff);
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("0"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("0"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(r::single_command_t("publish", "some-channel2", "last"));
         s_result = producer.read(rx_buff);
-        REQUIRE(boost::apply_visitor(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
     }
@@ -118,17 +118,17 @@ TEST_CASE("subscription", "[connection]") {
             REQUIRE(!ec);
 #ifdef BREDIS_DEBUG
             BREDIS_LOG_DEBUG(
-                "subscription callback " << boost::apply_visitor(
+                "subscription callback " << std::visit(
                     r::marker_helpers::stringizer<Iterator>(), r.result));
 #endif
             REQUIRE(!ec);
-            auto extract = boost::apply_visitor(Extractor(), r.result);
+            auto extract = std::visit(Extractor(), r.result);
             r::extracts::array_holder_t array_reply =
-                boost::get<r::extracts::array_holder_t>(extract);
+                std::get<r::extracts::array_holder_t>(extract);
             auto *type_reply =
-                boost::get<r::extracts::string_t>(&array_reply.elements[0]);
+                std::get_if<r::extracts::string_t>(&array_reply.elements[0]);
             auto *string_reply =
-                boost::get<r::extracts::string_t>(&array_reply.elements[2]);
+                std::get_if<r::extracts::string_t>(&array_reply.elements[2]);
             BREDIS_LOG_DEBUG("examining for completion. String: "
                              << (string_reply ? string_reply->str : ""));
 
@@ -141,7 +141,7 @@ TEST_CASE("subscription", "[connection]") {
                     retrigger = true;
                 }
                 auto *channel =
-                    boost::get<r::extracts::string_t>(&array_reply.elements[1]);
+                    std::get_if<r::extracts::string_t>(&array_reply.elements[1]);
                 REQUIRE(channel);
                 std::string payload(string_reply->str);
                 messages.emplace_back(channel->str + ":" + payload);

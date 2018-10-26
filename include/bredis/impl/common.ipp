@@ -23,7 +23,7 @@
 namespace bredis {
 
 template <typename Iterator, typename Policy>
-struct consumed_parse : public boost::static_visitor<int> {
+struct consumed_parse {
     int
     operator()(const positive_parse_result_t<Iterator, Policy> &value) const {
         return static_cast<int>(value.consumed);
@@ -52,7 +52,7 @@ template <typename Iterator> class MatchResult {
         do {
             auto from = parse_from;
             auto parse_result = Protocol::parse<Iterator, Policy>(from, end);
-            auto consumable = boost::apply_visitor(
+            auto consumable = std::visit(
                 consumed_parse<Iterator, Policy>(), parse_result);
             if (consumable == -1) {
                 // parse error
@@ -74,7 +74,7 @@ template <typename Iterator> class MatchResult {
     }
 };
 
-class command_serializer_visitor : public boost::static_visitor<std::string> {
+class command_serializer_visitor {
   public:
     std::string operator()(const single_command_t &value) const {
         std::stringstream out;

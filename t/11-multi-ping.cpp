@@ -69,7 +69,7 @@ TEST_CASE("ping", "[connection]") {
             }
             REQUIRE(!error_code);
             auto &replies =
-                boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+                std::get<r::markers::array_holder_t<Iterator>>(r.result);
             BREDIS_LOG_DEBUG("callback, size: " << replies.elements.size());
             REQUIRE(replies.elements.size() == count);
             completion_promise.set_value();

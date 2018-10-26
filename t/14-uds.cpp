@@ -80,18 +80,18 @@ TEST_CASE("ping", "[connection]") {
         REQUIRE(!error_code);
         rx_buff.consume(r.consumed);
 
-        auto str = boost::apply_visitor(
+        auto str = std::visit(
             r::marker_helpers::stringizer<Iterator>(), r.result);
         BREDIS_LOG_DEBUG("result: " << str);
 
         auto equality = r::marker_helpers::equality<Iterator>("PONG");
         auto &results =
-            boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+            std::get<r::markers::array_holder_t<Iterator>>(r.result);
         BREDIS_LOG_DEBUG("callback, size: " << results.elements.size());
         REQUIRE(results.elements.size() == count);
 
         for (const auto &v : results.elements) {
-            REQUIRE(boost::apply_visitor(equality, v));
+            REQUIRE(std::visit(equality, v));
         }
         completion_promise.set_value();
     };

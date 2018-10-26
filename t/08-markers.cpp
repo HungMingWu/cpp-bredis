@@ -1,5 +1,4 @@
 #include <boost/asio/buffer.hpp>
-#include <boost/variant/apply_visitor.hpp>
 #include <string>
 #include <vector>
 
@@ -103,24 +102,24 @@ TEST_CASE("subscription mixed case", "[markers]") {
 
     r::marker_helpers::check_subscription<Iterator> check_subscription_1{
         std::move(subscribe_1)};
-    REQUIRE(boost::apply_visitor(check_subscription_1, reply_1));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_2));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_1));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_2));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_3));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_4));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_5));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_6));
-    REQUIRE(!boost::apply_visitor(check_subscription_1, reply_wrong_7));
+    REQUIRE(std::visit(check_subscription_1, reply_1));
+    REQUIRE(!std::visit(check_subscription_1, reply_2));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_1));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_2));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_3));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_4));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_5));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_6));
+    REQUIRE(!std::visit(check_subscription_1, reply_wrong_7));
 
     r::marker_helpers::check_subscription<Iterator> check_subscription_2{
         std::move(subscribe_2)};
-    REQUIRE(boost::apply_visitor(check_subscription_2, reply_2));
-    REQUIRE(!boost::apply_visitor(check_subscription_2, reply_1));
+    REQUIRE(std::visit(check_subscription_2, reply_2));
+    REQUIRE(!std::visit(check_subscription_2, reply_1));
 
     r::marker_helpers::check_subscription<Iterator> check_subscription_3{
         std::move(subscribe_3)};
-    REQUIRE(boost::apply_visitor(check_subscription_3, reply_1));
-    REQUIRE(boost::apply_visitor(check_subscription_3, reply_3));
-    REQUIRE(!boost::apply_visitor(check_subscription_3, reply_2));
+    REQUIRE(std::visit(check_subscription_3, reply_1));
+    REQUIRE(std::visit(check_subscription_3, reply_3));
+    REQUIRE(!std::visit(check_subscription_3, reply_2));
 }

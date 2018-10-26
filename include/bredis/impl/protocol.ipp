@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <boost/asio/buffers_iterator.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/variant.hpp>
+#include <variant>
 #include <errno.h>
 #include <stdlib.h>
 #include <string>
@@ -78,7 +78,7 @@ struct count_value_t {
 
 template <typename Iterator, typename Policy>
 using count_variant_t =
-    boost::variant<count_value_t, parse_result_t<Iterator, Policy>>;
+    std::variant<count_value_t, parse_result_t<Iterator, Policy>>;
 
 template <typename Iterator, typename Policy> struct markup_helper_t {
     using result_wrapper_t = parse_result_t<Iterator, Policy>;
@@ -100,7 +100,7 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
 
     static auto markup_error(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
-        auto &str = boost::get<string_t>(wrapped_string.result);
+        auto &str = std::get<string_t>(wrapped_string.result);
         return result_wrapper_t{
             positive_wrapper_t{result_t{markers::error_t<Iterator>{str}},
                                wrapped_string.consumed}};
@@ -108,7 +108,7 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
 
     static auto markup_int(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
-        auto &str = boost::get<string_t>(wrapped_string.result);
+        auto &str = std::get<string_t>(wrapped_string.result);
         return result_wrapper_t{positive_wrapper_t{
             result_t{markers::int_t<Iterator>{str}}, wrapped_string.consumed}};
     }
@@ -182,22 +182,21 @@ struct array_helper_t<Iterator, parsing_policy::drop_result> {
 };
 
 template <typename Iterator, typename Policy>
-struct unwrap_count_t
-    : public boost::static_visitor<count_variant_t<Iterator, Policy>> {
+struct unwrap_count_t {
     using wrapped_result_t = count_variant_t<Iterator, Policy>;
     using negative_result_t = parse_result_t<Iterator, Policy>;
     using positive_input_t =
         parse_result_mapper_t<Iterator, parsing_policy::keep_result>;
 
     template <typename T> wrapped_result_t operator()(const T &value) const {
-        return wrapped_result_t{negative_result_t{value}};
+        return negative_result_t{value};
     }
 
     wrapped_result_t operator()(const positive_input_t &value) const {
         using string_t = markers::string_t<Iterator>;
         using helper = markup_helper_t<Iterator, Policy>;
 
-        auto &count_string_ref = boost::get<string_t>(value.result);
+        auto &count_string_ref = std::get<string_t>(value.result);
         std::string count_string{count_string_ref.from, count_string_ref.to};
         auto count_consumed = value.consumed;
         const char *count_ptr = count_string.c_str();
@@ -215,9 +214,7 @@ struct unwrap_count_t
                 Error::make_error_code(bredis_errors::count_range)}};
         }
 
-        return wrapped_result_t{
-            count_value_t{static_cast<size_t>(count), count_consumed},
-        };
+        return count_value_t{static_cast<size_t>(count), count_consumed};
     }
 };
 
@@ -248,11 +245,11 @@ template <typename Iterator, typename Policy> struct error_parser_t {
         using wrapped_result_t = parse_result_mapper_t<Iterator, Policy>;
 
         auto result = parser_t::apply(from, to, already_consumed);
-        auto *wrapped_string = boost::get<wrapped_result_t>(&result);
-        if (!wrapped_string) {
+        if (auto *wrapped_string = std::get_if<wrapped_result_t>(&result); !wrapped_string) {
             return result;
-        }
-        return helper::markup_error(*wrapped_string);
+        } else {
+	    return helper::markup_error(*wrapped_string);
+	}
     }
 };
 
@@ -265,11 +262,11 @@ template <typename Iterator, typename Policy> struct int_parser_t {
         using wrapped_result_t = parse_result_mapper_t<Iterator, Policy>;
 
         auto result = parser_t::apply(from, to, already_consumed);
-        auto *wrapped_string = boost::get<wrapped_result_t>(&result);
-        if (!wrapped_string) {
+        if (auto *wrapped_string = std::get_if<wrapped_result_t>(&result); !wrapped_string) {
             return result;
-        }
-        return helper::markup_int(*wrapped_string);
+        } else {
+            return helper::markup_int(*wrapped_string);
+	}
     }
 };
 
@@ -286,30 +283,30 @@ template <typename Iterator, typename Policy> struct bulk_string_parser_t {
 
         auto count_result = count_parser_t::apply(from, to, already_consumed);
         auto count_int_result =
-            boost::apply_visitor(count_unwrapper_t{}, count_result);
-        auto *count_wrapped = boost::get<count_value_t>(&count_int_result);
-        if (!count_wrapped) {
-            return boost::get<result_t>(count_int_result);
-        }
+            std::visit(count_unwrapper_t{}, count_result);
+        if (auto *count_wrapped = std::get_if<count_value_t>(&count_int_result); !count_wrapped) {
+            return std::get<result_t>(count_int_result);
+        } else {
 
-        auto head = from + (count_wrapped->consumed - already_consumed);
-        size_t left = std::distance(head, to);
-        size_t count = count_wrapped->value;
-        auto terminator_size = terminator.size;
-        if (left < count + terminator_size) {
-            return not_enough_data_t{};
-        }
-        auto tail = head + count;
-        auto tail_end = tail + terminator_size;
+            auto head = from + (count_wrapped->consumed - already_consumed);
+            size_t left = std::distance(head, to);
+            size_t count = count_wrapped->value;
+            auto terminator_size = terminator.size;
+            if (left < count + terminator_size) {
+                return not_enough_data_t{};
+            }
+            auto tail = head + count;
+            auto tail_end = tail + terminator_size;
 
-        bool found_terminator = terminator.equal(tail, tail_end);
-        if (!found_terminator) {
-            return protocol_error_t{
-                Error::make_error_code(bredis_errors::bulk_terminator)};
-        }
-        size_t consumed = count_wrapped->consumed + count + terminator_size;
+            bool found_terminator = terminator.equal(tail, tail_end);
+            if (!found_terminator) {
+                return protocol_error_t{
+                    Error::make_error_code(bredis_errors::bulk_terminator)};
+            }
+            size_t consumed = count_wrapped->consumed + count + terminator_size;
 
-        return helper::markup_string(consumed, head, tail);
+            return helper::markup_string(consumed, head, tail);
+	}
     }
 };
 
@@ -328,40 +325,38 @@ template <typename Iterator, typename Policy> struct array_parser_t {
 
         auto count_result = count_parser_t::apply(from, to, already_consumed);
         auto count_int_result =
-            boost::apply_visitor(count_unwrapper_t{}, count_result);
-        auto *count_wrapped = boost::get<count_value_t>(&count_int_result);
-        if (!count_wrapped) {
-            return boost::get<result_t>(count_int_result);
-        }
-
-        auto count = count_wrapped->value;
-        array_helper elements{count_wrapped->consumed, count};
-        long marked_elements{0};
-        Iterator element_from =
-            from + (count_wrapped->consumed - already_consumed);
-        while (marked_elements < count) {
-            auto element_result = raw_parse<Iterator, Policy>(element_from, to);
-            auto *element = boost::get<element_t>(&element_result);
-            if (!element) {
-                return element_result;
-            }
-            element_from += element->consumed;
-            elements.push(*element);
-            ++marked_elements;
-        }
-        return elements.get();
+            std::visit(count_unwrapper_t{}, count_result);
+        if (auto *count_wrapped = std::get_if<count_value_t>(&count_int_result); !count_wrapped) {
+            return std::get<result_t>(count_int_result);
+        } else {
+            auto count = count_wrapped->value;
+            array_helper elements{count_wrapped->consumed, count};
+            long marked_elements{0};
+            Iterator element_from =
+                from + (count_wrapped->consumed - already_consumed);
+            while (marked_elements < count) {
+                auto element_result = raw_parse<Iterator, Policy>(element_from, to);
+                if (auto *element = std::get_if<element_t>(&element_result); !element) {
+                    return element_result;
+                } else {
+                    element_from += element->consumed;
+                    elements.push(*element);
+                    ++marked_elements;
+		}
+	    }
+            return elements.get();
+	}
     }
 };
 
 template <typename Iterator, typename Policy>
-using primary_parser_t = boost::variant<
+using primary_parser_t = std::variant<
     not_enough_data_t, protocol_error_t, string_parser_t<Iterator, Policy>,
     int_parser_t<Iterator, Policy>, error_parser_t<Iterator, Policy>,
     bulk_string_parser_t<Iterator, Policy>, array_parser_t<Iterator, Policy>>;
 
 template <typename Iterator, typename Policy>
-struct unwrap_primary_parser_t
-    : public boost::static_visitor<parse_result_t<Iterator, Policy>> {
+struct unwrap_primary_parser_t {
     using wrapped_result_t = parse_result_t<Iterator, Policy>;
 
     const Iterator &from_;
@@ -422,7 +417,7 @@ parse_result_t<Iterator, Policy> raw_parse(const Iterator &from,
                                            const Iterator &to) {
     auto primary =
         construct_primary_parcer_t<Iterator, Policy>::apply(from, to);
-    return boost::apply_visitor(
+    return std::visit(
         unwrap_primary_parser_t<Iterator, Policy>(from, to), primary);
 }
 

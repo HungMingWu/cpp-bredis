@@ -76,13 +76,12 @@ operator()(boost::system::error_code error_code,
 
         do {
             auto parse_result = Protocol::parse(begin, end);
-            auto *parse_error = boost::get<protocol_error_t>(&parse_result);
-            if (parse_error) {
+            if (auto *parse_error = std::get_if<protocol_error_t>(&parse_result); parse_error) {
                 error_code = parse_error->code;
                 break;
             } else {
                 auto &positive_result =
-                    boost::get<positive_result_t>(parse_result);
+                    std::get<positive_result_t>(parse_result);
                 results.elements.emplace_back(positive_result.result);
                 begin += positive_result.consumed;
                 cumulative_consumption += positive_result.consumed;

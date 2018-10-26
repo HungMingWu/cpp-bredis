@@ -10,10 +10,9 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <variant>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/variant.hpp>
-#include <boost/variant/recursive_variant.hpp>
 
 #include "bredis/Result.hpp"
 
@@ -35,10 +34,9 @@ struct nil_t {};
 
 // forward declaration
 struct array_holder_t;
-using array_wrapper_t = boost::recursive_wrapper<array_holder_t>;
 
 using extraction_result_t =
-    boost::variant<int_t, string_t, error_t, nil_t, array_wrapper_t>;
+    std::variant<int_t, string_t, error_t, nil_t, array_holder_t>;
 
 struct array_holder_t {
     using recursive_array_t = std::vector<extraction_result_t>;
@@ -48,7 +46,7 @@ struct array_holder_t {
 } // namespace extracts
 
 template <typename Iterator>
-struct extractor : public boost::static_visitor<extracts::extraction_result_t> {
+struct extractor {
 
     extracts::extraction_result_t
     operator()(const markers::string_t<Iterator> &value) const {
@@ -87,7 +85,7 @@ struct extractor : public boost::static_visitor<extracts::extraction_result_t> {
         extracts::array_holder_t r;
         r.elements.reserve(value.elements.size());
         for (const auto &v : value.elements) {
-            r.elements.emplace_back(boost::apply_visitor(*this, v));
+            r.elements.emplace_back(std::visit(*this, v));
         }
         return r;
     }

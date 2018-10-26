@@ -101,10 +101,10 @@ int main(int argc, char **argv) {
         [&](const boost::system::error_code &ec, auto &&r) {
             assert(!ec);
             auto &replies =
-                boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+                std::get<r::markers::array_holder_t<Iterator>>(r.result);
             auto &last_reply = replies.elements.at(replies.elements.size() - 1);
             auto &str_reply =
-                boost::get<r::markers::string_t<Iterator>>(last_reply);
+                std::get<r::markers::string_t<Iterator>>(last_reply);
             std::string value{str_reply.from, str_reply.to};
             rx_buff.consume(r.consumed);
             count += replies.elements.size() - 1;

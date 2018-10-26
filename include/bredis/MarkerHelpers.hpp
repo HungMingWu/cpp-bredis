@@ -21,7 +21,7 @@ namespace bredis {
 namespace marker_helpers {
 
 template <typename Iterator>
-struct stringizer : public boost::static_visitor<std::string> {
+struct stringizer {
 
     std::string operator()(const markers::string_t<Iterator> &value) const {
         auto size = std::distance(value.from, value.to);
@@ -55,7 +55,7 @@ struct stringizer : public boost::static_visitor<std::string> {
     operator()(const markers::array_holder_t<Iterator> &value) const {
         std::string r = "[array] {";
         for (const auto &v : value.elements) {
-            r += boost::apply_visitor(*this, v) + ", ";
+            r += std::visit(*this, v) + ", ";
         }
         r += "}";
         return r;
@@ -63,7 +63,7 @@ struct stringizer : public boost::static_visitor<std::string> {
 };
 
 template <typename Iterator>
-class equality : public boost::static_visitor<bool> {
+class equality {
     using StringIterator = std::string::const_iterator;
 
   private:
@@ -109,7 +109,7 @@ class equality : public boost::static_visitor<bool> {
 //
 
 template <typename Iterator>
-class check_subscription : public boost::static_visitor<bool> {
+class check_subscription {
 
   private:
     bredis::single_command_t cmd_;
@@ -127,7 +127,7 @@ class check_subscription : public boost::static_visitor<bool> {
         if ((value.elements.size() == 3) && (cmd_.arguments.size() >= 2)) {
             // check case-insentensive 1st argument, which chan be subscribe or
             // psubscribe
-            const auto *cmd = boost::get<bredis::markers::string_t<Iterator>>(
+            const auto *cmd = std::get_if<bredis::markers::string_t<Iterator>>(
                 &value.elements[0]);
             if (!cmd) {
                 return false;
@@ -143,7 +143,7 @@ class check_subscription : public boost::static_visitor<bool> {
             }
 
             // get the index, 3rd field as string
-            const auto *idx_ref = boost::get<bredis::markers::int_t<Iterator>>(
+            const auto *idx_ref = std::get_if<bredis::markers::int_t<Iterator>>(
                 &value.elements[2]);
             if (!idx_ref) {
                 return false;
@@ -164,7 +164,7 @@ class check_subscription : public boost::static_visitor<bool> {
 
             // case-sentensive channel name comparison
             const auto *channel =
-                boost::get<bredis::markers::string_t<Iterator>>(
+                std::get_if<bredis::markers::string_t<Iterator>>(
                     &value.elements[1]);
             if (!channel) {
                 return false;
