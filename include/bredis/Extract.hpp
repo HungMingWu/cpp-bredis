@@ -49,34 +49,27 @@ template <typename Iterator>
 struct extractor {
 
     extracts::extraction_result_t
-    operator()(const markers::string_t<Iterator> &value) const {
+    operator()(const markers::string_t &value) const {
         extracts::string_t r;
-        auto size = std::distance(value.from, value.to);
-        r.str.reserve(size);
-        r.str.append(value.from, value.to);
-        return r;
+        r.str = std::string(value);
+	return r;
     }
 
     extracts::extraction_result_t
-    operator()(const markers::error_t<Iterator> &value) const {
+    operator()(const markers::error_t &value) const {
         extracts::error_t r;
-        auto size = std::distance(value.string.from, value.string.to);
-        r.str.reserve(size);
-        r.str.append(value.string.from, value.string.to);
+        r.str = std::string(value);
         return r;
     }
 
     extracts::extraction_result_t
-    operator()(const markers::int_t<Iterator> &value) const {
-        std::string str;
-        auto size = std::distance(value.string.from, value.string.to);
-        str.reserve(size);
-        str.append(value.string.from, value.string.to);
+    operator()(const markers::int_t &value) const {
+        std::string str = std::string(value);
         return extracts::int_t{boost::lexical_cast<extracts::int_t>(str)};
     }
 
     extracts::extraction_result_t
-    operator()(const markers::nil_t<Iterator> &value) const {
+    operator()(const markers::nil_t &value) const {
         return extracts::nil_t{};
     }
 

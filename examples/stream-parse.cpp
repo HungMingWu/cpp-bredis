@@ -67,20 +67,20 @@ struct json_extractor {
         // return back boost::optional and channel name
         if (value.elements.size() == 3) {
             const auto *channel =
-                std::get_if<r::markers::string_t<Iterator>>(&value.elements[1]);
+                std::get_if<r::markers::string_t>(&value.elements[1]);
             const auto *payload =
-                std::get_if<r::markers::string_t<Iterator>>(&value.elements[2]);
+                std::get_if<r::markers::string_t>(&value.elements[2]);
             if (channel && payload) {
                 std::string err;
                 picojson::value v;
-                picojson::parse(v, payload->from, payload->to, &err);
+                picojson::parse(v, payload->begin(), payload->end(), &err);
                 if (!err.empty()) {
                     std::cout << "json parse error :: " << err << "\n";
                     return option_t{};
                 }
                 // all OK
                 return option_t{
-                    json_payload{std::string{channel->from, channel->to}, v}};
+                    json_payload{std::string{*channel}, v}};
             }
         }
         return option_t{};

@@ -45,11 +45,11 @@ TEST_CASE("right consumption", "[protocol]") {
     REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a1"),
         array->elements[2]));
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&array->elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&array->elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&array->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&array->elements[2]) !=
             nullptr);
 }
 

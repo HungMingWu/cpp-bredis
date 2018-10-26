@@ -22,79 +22,64 @@ TEST_CASE("subscription mixed case", "[markers]") {
 
     r::markers::redis_result_t<Iterator> reply_1{
         r::markers::array_holder_t<Iterator>{
-            {r::markers::string_t<Iterator>{cmd_subscribe.begin(),
-                                            cmd_subscribe.end()},
-             r::markers::string_t<Iterator>{cmd_channel1.begin(),
-                                            cmd_channel1.end()},
-             r::markers::int_t<Iterator>{
-                 {cmd_idx_1.begin(), cmd_idx_1.end()}}}}};
+            {r::markers::string_t{cmd_subscribe},
+             r::markers::string_t{cmd_channel1},
+             r::markers::int_t{
+                 {cmd_idx_1}}}}};
 
     r::markers::redis_result_t<Iterator> reply_2{
         r::markers::array_holder_t<Iterator>{
-            {r::markers::string_t<Iterator>{cmd_subscribe.begin(),
-                                            cmd_subscribe.end()},
-             r::markers::string_t<Iterator>{cmd_channel2.begin(),
-                                            cmd_channel2.end()},
-             r::markers::int_t<Iterator>{
-                 {cmd_idx_1.begin(), cmd_idx_1.end()}}}}};
+            {r::markers::string_t{cmd_subscribe},
+             r::markers::string_t{cmd_channel2},
+             r::markers::int_t{
+                 {cmd_idx_1}}}}};
 
     r::markers::redis_result_t<Iterator> reply_3{
         r::markers::array_holder_t<Iterator>{
-            {r::markers::string_t<Iterator>{cmd_subscribe.begin(),
-                                            cmd_subscribe.end()},
-             r::markers::string_t<Iterator>{cmd_channel2.begin(),
-                                            cmd_channel2.end()},
-             r::markers::int_t<Iterator>{
-                 {cmd_idx_2.begin(), cmd_idx_2.end()}}}}};
+            {r::markers::string_t{cmd_subscribe},
+             r::markers::string_t{cmd_channel2},
+             r::markers::int_t{
+                 {cmd_idx_2}}}}};
 
     r::markers::redis_result_t<Iterator> reply_wrong_1;
     r::markers::redis_result_t<Iterator> reply_wrong_2{
         r::markers::array_holder_t<Iterator>{
-            {r::markers::string_t<Iterator>{cmd_psubscribe.begin(),
-                                            cmd_psubscribe.end()},
-             r::markers::string_t<Iterator>{cmd_channel2.begin(),
-                                            cmd_channel2.end()},
-             r::markers::int_t<Iterator>{
-                 {cmd_idx_1.begin(), cmd_idx_1.end()}}}}};
+            {r::markers::string_t{cmd_psubscribe},
+             r::markers::string_t{cmd_channel2},
+             r::markers::int_t{
+                 {cmd_idx_1}}}}};
     r::markers::redis_result_t<Iterator> reply_wrong_3{
         r::markers::array_holder_t<Iterator>{{
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
+            r::markers::int_t{{cmd_idx_1}},
+            r::markers::int_t{{cmd_idx_1}},
+            r::markers::int_t{{cmd_idx_1}},
         }}};
     r::markers::redis_result_t<Iterator> reply_wrong_4{
         r::markers::array_holder_t<Iterator>{{
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
-            r::markers::int_t<Iterator>{{cmd_idx_1.begin(), cmd_idx_1.end()}},
+            r::markers::int_t{{cmd_idx_1}},
+            r::markers::int_t{{cmd_idx_1}},
+            r::markers::int_t{{cmd_idx_1}},
+            r::markers::int_t{{cmd_idx_1}},
         }}};
     r::markers::redis_result_t<Iterator> reply_wrong_5{
         r::markers::array_holder_t<Iterator>{{
-            r::markers::string_t<Iterator>{cmd_psubscribe.begin(),
-                                           cmd_psubscribe.end()},
-            r::markers::string_t<Iterator>{cmd_channel2.begin(),
-                                           cmd_channel2.end()},
-            r::markers::string_t<Iterator>{cmd_psubscribe.begin(),
-                                           cmd_psubscribe.end()},
+            r::markers::string_t{cmd_psubscribe},
+            r::markers::string_t{cmd_channel2},
+            r::markers::string_t{cmd_psubscribe}
         }}};
     r::markers::redis_result_t<Iterator> reply_wrong_6{
         r::markers::array_holder_t<Iterator>{{
-            r::markers::string_t<Iterator>{cmd_psubscribe.begin(),
-                                           cmd_psubscribe.end()},
-            r::markers::string_t<Iterator>{cmd_channel2.begin(),
-                                           cmd_channel2.end()},
-            r::markers::int_t<Iterator>{
-                {cmd_channel2.begin(), cmd_channel2.end()}},
+            r::markers::string_t{cmd_psubscribe},
+            r::markers::string_t{cmd_channel2},
+            r::markers::int_t{
+                {cmd_channel2}},
         }}};
     r::markers::redis_result_t<Iterator> reply_wrong_7{
         r::markers::array_holder_t<Iterator>{
-            {r::markers::string_t<Iterator>{cmd_subscribe.begin(),
-                                            cmd_subscribe.end()},
-             r::markers::string_t<Iterator>{cmd_channel1.begin(),
-                                            cmd_channel1.end()},
-             r::markers::int_t<Iterator>{
-                 {cmd_idx_5.begin(), cmd_idx_5.end()}}}}};
+            {r::markers::string_t{cmd_subscribe},
+             r::markers::string_t{cmd_channel1},
+             r::markers::int_t{
+                 {cmd_idx_5}}}}};
 
     r::single_command_t subscribe_1{"subscribe", cmd_channel1};
     r::single_command_t subscribe_2{"SUBSCRIBE", cmd_channel2};

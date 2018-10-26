@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
                 std::get<r::markers::array_holder_t<Iterator>>(r.result);
             auto &last_reply = replies.elements.at(replies.elements.size() - 1);
             auto &str_reply =
-                std::get<r::markers::string_t<Iterator>>(last_reply);
-            std::string value{str_reply.from, str_reply.to};
+                std::get<r::markers::string_t>(last_reply);
+            std::string value{str_reply};
             rx_buff.consume(r.consumed);
             count += replies.elements.size() - 1;
             completion_promise.set_value(value);

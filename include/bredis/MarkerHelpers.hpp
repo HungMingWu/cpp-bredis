@@ -23,31 +23,22 @@ namespace marker_helpers {
 template <typename Iterator>
 struct stringizer {
 
-    std::string operator()(const markers::string_t<Iterator> &value) const {
-        auto size = std::distance(value.from, value.to);
-        std::string r;
-        r.reserve(size);
-        r.append(value.from, value.to);
+    std::string operator()(const markers::string_t &value) const {
+        std::string r(value);
         return "[str] " + r;
     }
 
-    std::string operator()(const markers::error_t<Iterator> &value) const {
-        auto size = std::distance(value.string.from, value.string.to);
-        std::string r;
-        r.reserve(size);
-        r.append(value.string.from, value.string.to);
+    std::string operator()(const markers::error_t &value) const {
+        std::string r(value);;
         return "[err] " + r;
     }
 
-    std::string operator()(const markers::int_t<Iterator> &value) const {
-        auto size = std::distance(value.string.from, value.string.to);
-        std::string r;
-        r.reserve(size);
-        r.append(value.string.from, value.string.to);
+    std::string operator()(const markers::int_t &value) const {
+        std::string r(value);
         return "[int] " + r;
     }
 
-    std::string operator()(const markers::nil_t<Iterator> &value) const {
+    std::string operator()(const markers::nil_t &value) const {
         return "[nil] ";
     }
 
@@ -79,22 +70,22 @@ class equality {
         return false;
     }
 
-    bool operator()(const markers::string_t<Iterator> &value) const {
+    bool operator()(const markers::string_t &value) const {
         auto helper = stringizer<Iterator>();
         auto str = helper(value);
-        return std::equal(begin_, end_, value.from, value.to);
+        return std::equal(begin_, end_, value.begin(), value.end());
     }
 
-    bool operator()(const markers::int_t<Iterator> &value) const {
-        return std::equal(begin_, end_, value.string.from, value.string.to);
+    bool operator()(const markers::int_t &value) const {
+        return std::equal(begin_, end_, value.begin(), value.end());
     }
 
-    bool operator()(const markers::error_t<Iterator> &value) const {
-        return std::equal(begin_, end_, value.string.from, value.string.to);
+    bool operator()(const markers::error_t &value) const {
+        return std::equal(begin_, end_, value.begin(), value.end());
     }
 
-    bool operator()(const markers::nil_t<Iterator> &value) const {
-        return std::equal(begin_, end_, value.string.from, value.string.to);
+    bool operator()(const markers::nil_t &value) const {
+        return std::equal(begin_, end_, value.begin(), value.end());
     }
 };
 
@@ -127,13 +118,13 @@ class check_subscription {
         if ((value.elements.size() == 3) && (cmd_.arguments.size() >= 2)) {
             // check case-insentensive 1st argument, which chan be subscribe or
             // psubscribe
-            const auto *cmd = std::get_if<bredis::markers::string_t<Iterator>>(
+            const auto *cmd = std::get_if<bredis::markers::string_t>(
                 &value.elements[0]);
             if (!cmd) {
                 return false;
             }
             bool eq_cmd = std::equal(
-                cmd->from, cmd->to, cmd_.arguments[0].cbegin(),
+                cmd->begin(), cmd->end(), cmd_.arguments[0].cbegin(),
                 [](const char a, const char b) {
                     return std::toupper(static_cast<unsigned char>(a)) ==
                            std::toupper(static_cast<unsigned char>(b));
@@ -143,13 +134,13 @@ class check_subscription {
             }
 
             // get the index, 3rd field as string
-            const auto *idx_ref = std::get_if<bredis::markers::int_t<Iterator>>(
+            const auto *idx_ref = std::get_if<bredis::markers::int_t>(
                 &value.elements[2]);
             if (!idx_ref) {
                 return false;
             }
 
-            std::string idx_str{idx_ref->string.from, idx_ref->string.to};
+            std::string idx_str{*idx_ref};
             boost::cnv::lexical_cast cnv;
             auto idx_option = boost::convert<int>(idx_str, cnv);
             if (!idx_option) {
@@ -164,15 +155,15 @@ class check_subscription {
 
             // case-sentensive channel name comparison
             const auto *channel =
-                std::get_if<bredis::markers::string_t<Iterator>>(
+                std::get_if<bredis::markers::string_t>(
                     &value.elements[1]);
             if (!channel) {
                 return false;
             }
 
             const auto &channel_ = cmd_.arguments[idx];
-            return std::equal(channel_.cbegin(), channel_.cend(), channel->from,
-                              channel->to);
+            return std::equal(channel_.cbegin(), channel_.cend(), channel->begin(),
+                              channel->end());
         }
         return false;
     }

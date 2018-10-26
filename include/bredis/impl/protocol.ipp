@@ -7,6 +7,7 @@
 #pragma once
 
 #include <algorithm>
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/buffers_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include <variant>
@@ -84,24 +85,27 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
     using result_wrapper_t = parse_result_t<Iterator, Policy>;
     using positive_wrapper_t = parse_result_mapper_t<Iterator, Policy>;
     using result_t = markers::redis_result_t<Iterator>;
-    using string_t = markers::string_t<Iterator>;
+    using string_t = markers::string_t;
 
     static auto markup_string(size_t consumed, const Iterator &from,
                               const Iterator &to) -> result_wrapper_t {
+        const char *view_from = (const char*)*from;
+        const char *view_to = (const char*)*to;;
+	auto view = std::string_view(view_from, view_to - view_from);
         return positive_wrapper_t{
-            result_t{markers::string_t<Iterator>{from, to}}, consumed};
+            result_t{markers::string_t{view}}, consumed};
     }
 
     static auto markup_nil(size_t consumed, const string_t &str)
         -> result_wrapper_t {
         return positive_wrapper_t{
-            result_t{markers::nil_t<Iterator>{str}}, consumed};
+            result_t{markers::nil_t{str}}, consumed};
     }
 
     static auto markup_error(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
         auto &str = std::get<string_t>(wrapped_string.result);
-        return positive_wrapper_t{result_t{markers::error_t<Iterator>{str}},
+        return positive_wrapper_t{result_t{markers::error_t{str}},
                                wrapped_string.consumed};
     }
 
@@ -109,7 +113,7 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
         -> result_wrapper_t {
         auto &str = std::get<string_t>(wrapped_string.result);
         return positive_wrapper_t{
-            result_t{markers::int_t<Iterator>{str}}, wrapped_string.consumed};
+            result_t{markers::int_t{str}}, wrapped_string.consumed};
     }
 };
 
@@ -118,7 +122,7 @@ struct markup_helper_t<Iterator, parsing_policy::drop_result> {
     using policy_t = parsing_policy::drop_result;
     using result_wrapper_t = parse_result_t<Iterator, policy_t>;
     using positive_wrapper_t = parse_result_mapper_t<Iterator, policy_t>;
-    using string_t = markers::string_t<Iterator>;
+    using string_t = markers::string_t;
 
     static auto markup_string(size_t consumed, const Iterator &from,
                               const Iterator &to) -> result_wrapper_t {
@@ -192,11 +196,11 @@ struct unwrap_count_t {
     }
 
     wrapped_result_t operator()(const positive_input_t &value) const {
-        using string_t = markers::string_t<Iterator>;
+        using string_t = markers::string_t;
         using helper = markup_helper_t<Iterator, Policy>;
 
         auto &count_string_ref = std::get<string_t>(value.result);
-        std::string count_string{count_string_ref.from, count_string_ref.to};
+        std::string count_string{count_string_ref};
         auto count_consumed = value.consumed;
         const char *count_ptr = count_string.c_str();
         char *count_end;

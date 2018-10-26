@@ -6,44 +6,27 @@
 //
 #pragma once
 
+#include <string_view>
 #include <variant>
 
 namespace bredis {
 
 namespace markers {
 
-template <typename Iterator> struct string_t {
-    using iterator_t = Iterator;
-    Iterator from;
-    Iterator to;
-};
-
-template <typename Iterator> struct error_t {
-    using iterator_t = Iterator;
-    string_t<Iterator> string;
-};
-
-template <typename Iterator> struct int_t {
-    using iterator_t = Iterator;
-    string_t<Iterator> string;
-};
-
-template <typename Iterator> struct nil_t {
-    using iterator_t = Iterator;
-    string_t<Iterator> string;
-};
+using string_t = std::string_view;
+struct error_t : public string_t {};
+struct int_t : public string_t {};
+struct nil_t : public string_t {};
 
 template <typename Iterator> struct array_holder_t;
 
 template <typename Iterator>
 using redis_result_t =
-    std::variant<int_t<Iterator>, string_t<Iterator>, error_t<Iterator>,
-                   nil_t<Iterator>, array_holder_t<Iterator>>;
+    std::variant<int_t, string_t, error_t,
+                   nil_t, array_holder_t<Iterator>>;
 
 template <typename Iterator> struct array_holder_t {
-    using iterator_t = Iterator;
-    using recursive_array_t = std::vector<redis_result_t<Iterator>>;
-    recursive_array_t elements;
+    std::vector<redis_result_t<Iterator>> elements;
 };
 
 } // namespace markers

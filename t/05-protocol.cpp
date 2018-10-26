@@ -59,7 +59,7 @@ TEST_CASE("number-like", "[protocol]") {
     auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::int_t>(
                 &positive_parse_result.result) != nullptr);
     REQUIRE(
         std::visit(r::marker_helpers::equality<Iterator>("-55abc"),
@@ -83,7 +83,7 @@ TEST_CASE("simple error", "[protocol]") {
     auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(std::get_if<r::markers::error_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::error_t>(
                 &positive_parse_result.result) != nullptr);
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("Ooops"),
                                  positive_parse_result.result));
@@ -108,7 +108,7 @@ TEST_CASE("nil", "[protocol]") {
     REQUIRE(positive_parse_result.consumed == ok.size());
 
     auto *nil =
-        std::get_if<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
+        std::get_if<r::markers::nil_t>(&positive_parse_result.result);
     REQUIRE(nil != nullptr);
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("-1"),
                                  positive_parse_result.result));
@@ -131,7 +131,7 @@ TEST_CASE("some bulk string", "[protocol]") {
     auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::string_t>(
                 &positive_parse_result.result) != nullptr);
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("some"),
                                  positive_parse_result.result));
@@ -145,7 +145,7 @@ TEST_CASE("empty bulk string", "[protocol]") {
     auto positive_parse_result = std::get<positive_result_t>(parsed_result);
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(
+    REQUIRE(std::get_if<r::markers::string_t>(
                 &positive_parse_result.result) != nullptr);
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>(""),
                                  positive_parse_result.result));
@@ -236,7 +236,7 @@ TEST_CASE("null array", "[protocol]") {
     REQUIRE(positive_parse_result.consumed);
     REQUIRE(positive_parse_result.consumed == ok.size());
     auto *nil =
-        std::get_if<r::markers::nil_t<Iterator>>(&positive_parse_result.result);
+        std::get_if<r::markers::nil_t>(&positive_parse_result.result);
     REQUIRE(nil != nullptr);
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("-1"),
                                  positive_parse_result.result));
@@ -303,9 +303,9 @@ TEST_CASE("array: string, int, nil", "[protocol]") {
                                  array->elements[0]));
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("5"),
                                  array->elements[1]));
-    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&array->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::int_t>(&array->elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::nil_t<Iterator>>(&array->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::nil_t>(&array->elements[2]) !=
             nullptr);
 };
 
@@ -332,11 +332,11 @@ TEST_CASE("array of arrays: [int, int, int,], [str,err] ", "[protocol]") {
                                  a1->elements[1]));
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("3"),
                                  a1->elements[2]));
-    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::int_t>(&a1->elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::int_t>(&a1->elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::int_t<Iterator>>(&a1->elements[2]) !=
+    REQUIRE(std::get_if<r::markers::int_t>(&a1->elements[2]) !=
             nullptr);
 
     auto *a2 =
@@ -346,9 +346,9 @@ TEST_CASE("array of arrays: [int, int, int,], [str,err] ", "[protocol]") {
                                  a2->elements[0]));
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("Bar"),
                                  a2->elements[1]));
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2->elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a2->elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::error_t<Iterator>>(&a2->elements[1]) !=
+    REQUIRE(std::get_if<r::markers::error_t>(&a2->elements[1]) !=
             nullptr);
 };
 
@@ -386,11 +386,11 @@ TEST_CASE("overfilled buffer", "[protocol]") {
         a1.elements[1]));
     REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a1"), a1.elements[2]));
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a1.elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a1.elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a1.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a1.elements[2]) !=
             nullptr);
 
     buff = Buffer(ok.c_str() + 54, ok.size() - 54);
@@ -410,11 +410,11 @@ TEST_CASE("overfilled buffer", "[protocol]") {
         a2.elements[1]));
     REQUIRE(std::visit(
         r::marker_helpers::equality<Iterator>("message-a2"), a2.elements[2]));
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a2.elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a2.elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a2.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a2.elements[2]) !=
             nullptr);
 
     buff = Buffer(ok.c_str() + 54 * 2, ok.size() - 54 * 2);
@@ -434,11 +434,11 @@ TEST_CASE("overfilled buffer", "[protocol]") {
         a3.elements[1]));
     REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("last"),
                                  a3.elements[2]));
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[0]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a3.elements[0]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[1]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a3.elements[1]) !=
             nullptr);
-    REQUIRE(std::get_if<r::markers::string_t<Iterator>>(&a3.elements[2]) !=
+    REQUIRE(std::get_if<r::markers::string_t>(&a3.elements[2]) !=
             nullptr);
 }
 
