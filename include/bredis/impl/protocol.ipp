@@ -88,29 +88,28 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
 
     static auto markup_string(size_t consumed, const Iterator &from,
                               const Iterator &to) -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{
-            result_t{markers::string_t<Iterator>{from, to}}, consumed}};
+        return positive_wrapper_t{
+            result_t{markers::string_t<Iterator>{from, to}}, consumed};
     }
 
     static auto markup_nil(size_t consumed, const string_t &str)
         -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{
-            result_t{markers::nil_t<Iterator>{str}}, consumed}};
+        return positive_wrapper_t{
+            result_t{markers::nil_t<Iterator>{str}}, consumed};
     }
 
     static auto markup_error(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
         auto &str = std::get<string_t>(wrapped_string.result);
-        return result_wrapper_t{
-            positive_wrapper_t{result_t{markers::error_t<Iterator>{str}},
-                               wrapped_string.consumed}};
+        return positive_wrapper_t{result_t{markers::error_t<Iterator>{str}},
+                               wrapped_string.consumed};
     }
 
     static auto markup_int(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
         auto &str = std::get<string_t>(wrapped_string.result);
-        return result_wrapper_t{positive_wrapper_t{
-            result_t{markers::int_t<Iterator>{str}}, wrapped_string.consumed}};
+        return positive_wrapper_t{
+            result_t{markers::int_t<Iterator>{str}}, wrapped_string.consumed};
     }
 };
 
@@ -123,22 +122,22 @@ struct markup_helper_t<Iterator, parsing_policy::drop_result> {
 
     static auto markup_string(size_t consumed, const Iterator &from,
                               const Iterator &to) -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{consumed}};
+        return positive_wrapper_t{consumed};
     }
 
     static auto markup_nil(size_t consumed, const string_t &str)
         -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{consumed}};
+        return positive_wrapper_t{consumed};
     }
 
     static auto markup_error(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{wrapped_string.consumed}};
+        return positive_wrapper_t{wrapped_string.consumed};
     }
 
     static auto markup_int(positive_wrapper_t &wrapped_string)
         -> result_wrapper_t {
-        return result_wrapper_t{positive_wrapper_t{wrapped_string.consumed}};
+        return positive_wrapper_t{wrapped_string.consumed};
     }
 };
 
@@ -162,7 +161,7 @@ template <typename Iterator, typename Policy> struct array_helper_t {
         array_.elements.emplace_back(item.result);
     }
 
-    result_t get() { return result_t{item_t{std::move(array_), consumed_}}; }
+    result_t get() { return item_t{std::move(array_), consumed_}; }
 };
 
 template <typename Iterator>
@@ -205,13 +204,13 @@ struct unwrap_count_t {
         errno = 0;
         long count = strtol(count_ptr, &count_end, 10);
         if (errno) {
-            return wrapped_result_t{protocol_error_t{
-                Error::make_error_code(bredis_errors::count_conversion)}};
+            return protocol_error_t{
+                Error::make_error_code(bredis_errors::count_conversion)};
         } else if (count == -1) {
             return helper::markup_nil(count_consumed, count_string_ref);
         } else if (count < -1) {
-            return wrapped_result_t{protocol_error_t{
-                Error::make_error_code(bredis_errors::count_range)}};
+            return protocol_error_t{
+                Error::make_error_code(bredis_errors::count_range)};
         }
 
         return count_value_t{static_cast<size_t>(count), count_consumed};

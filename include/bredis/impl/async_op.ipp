@@ -77,7 +77,7 @@ operator()(boost::system::error_code error_code,
         do {
             auto parse_result = Protocol::parse(begin, end);
             if (auto *parse_error = std::get_if<protocol_error_t>(&parse_result); parse_error) {
-                error_code = parse_error->code;
+                error_code = *parse_error;
                 break;
             } else {
                 auto &positive_result =

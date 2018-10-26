@@ -25,9 +25,7 @@ template <typename DynamicBuffer> struct to_iterator {
         typename DynamicBuffer::const_buffers_type, char>;
 };
 
-struct protocol_error_t {
-    boost::system::error_code code;
-};
+using protocol_error_t =  boost::system::error_code;
 
 struct not_enough_data_t {};
 

@@ -108,7 +108,7 @@ Connection<NextLayer>::read(DynamicBuffer &rx_buff,
     auto parse_result = Protocol::parse(begin, end);
 
     if (auto *parse_error = std::get_if<protocol_error_t>(&parse_result); parse_error) {
-        ec = parse_error->code;
+        ec = *parse_error;
         return result_t{};
     }
     return std::get<result_t>(parse_result);
