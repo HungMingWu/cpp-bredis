@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include <boost/utility/string_ref.hpp>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 #include <variant>
@@ -26,20 +26,20 @@ using are_all_constructible = all_true<std::is_constructible<R, Ts>::value...>;
 
 } // namespace detail
 
-using args_container_t = std::vector<boost::string_ref>;
+using args_container_t = std::vector<std::string_view>;
 struct single_command_t {
     args_container_t arguments;
 
     template <typename... Args,
               typename = std::enable_if_t<detail::are_all_constructible<
-                  boost::string_ref, Args...>::value>>
+                  std::string_view, Args...>::value>>
     single_command_t(Args &&... args) : arguments{std::forward<Args>(args)...} {
         static_assert(sizeof...(Args) >= 1, "Empty command is not allowed");
     }
 
     template <typename InputIterator,
               typename = std::enable_if_t<std::is_constructible<
-                  boost::string_ref, typename std::iterator_traits<
+                  std::string_view, typename std::iterator_traits<
                                          InputIterator>::value_type>::value>>
     single_command_t(InputIterator first, InputIterator last)
         : arguments(first, last) {}

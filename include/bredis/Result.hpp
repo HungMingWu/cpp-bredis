@@ -14,7 +14,6 @@
 #include <variant>
 
 #include <boost/asio/buffers_iterator.hpp>
-#include <boost/utility/string_ref.hpp>
 
 #include "Error.hpp"
 #include "Markers.hpp"
