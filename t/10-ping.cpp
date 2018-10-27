@@ -26,7 +26,7 @@ TEST_CASE("ping", "[connection]") {
     using Buffer = boost::asio::streambuf;
     using Iterator = typename r::to_iterator<Buffer>::iterator_t;
     using Policy = r::parsing_policy::keep_result;
-    using result_t = r::positive_parse_result_t<Iterator, Policy>;
+    using result_t = r::positive_parse_result_t<Policy>;
 
     std::chrono::milliseconds sleep_delay(1);
 
@@ -64,7 +64,7 @@ TEST_CASE("ping", "[connection]") {
 
     auto parse_result = completion_future.get();
     auto extract =
-        std::visit(r::extractor<Iterator>(), parse_result.result);
+        std::visit(r::extractor(), parse_result.result);
     auto &reply_str = std::get<r::extracts::string_t>(extract);
     REQUIRE(reply_str.str == "PONG");
 };

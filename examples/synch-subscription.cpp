@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
         // get the subscription confirmation
         Buffer rx_buff;
-        r::marker_helpers::check_subscription<Iterator> check_subscription{
+        r::marker_helpers::check_subscription check_subscription{
             std::move(subscribe_cmd)};
 
         for (auto it = cmd_items.cbegin() + 1; it != cmd_items.cend(); it++) {
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
             // blocks until new message
             auto parse_result = c.read(rx_buff);
             // extract (aka decouple from buffer / copy) result
-            auto extract = std::visit(r::extractor<Iterator>(),
+            auto extract = std::visit(r::extractor(),
                                                 parse_result.result);
             // safe to consume buffer now
             rx_buff.consume(parse_result.consumed);

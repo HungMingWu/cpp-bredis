@@ -54,14 +54,13 @@ struct json_payload {
 
 using option_t = boost::optional<json_payload>;
 
-template <typename Iterator>
 struct json_extractor {
     template <typename T> option_t operator()(const T &value) const {
         return option_t{};
     }
 
     option_t
-    operator()(const r::markers::array_holder_t<Iterator> &value) const {
+    operator()(const r::markers::array_holder_t &value) const {
         // "message", channel_name, payload.
         // It is possible to have more stricter checks here, as well as
         // return back boost::optional and channel name
@@ -148,7 +147,7 @@ int main(int argc, char **argv) {
 
         // check subscription
         {
-            r::marker_helpers::check_subscription<Iterator> check_subscription{
+            r::marker_helpers::check_subscription check_subscription{
                 std::move(subscribe_cmd)};
 
             for (auto it = cmd_items.cbegin() + 1; it != cmd_items.cend();
@@ -186,7 +185,7 @@ int main(int argc, char **argv) {
             }
             // extract the JSON from message payload
 
-            json_extractor<Iterator> extract;
+            json_extractor extract;
             auto payload = std::visit(extract, parse_result.result);
 
             if (payload) {

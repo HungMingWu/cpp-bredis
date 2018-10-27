@@ -34,27 +34,27 @@ struct drop_result {};
 struct keep_result {};
 } // namespace parsing_policy
 
-template <typename Iterator, typename Policy> struct positive_parse_result_t {
-    markers::redis_result_t<Iterator> result;
+template <typename Policy> struct positive_parse_result_t {
+    markers::redis_result_t result;
     size_t consumed;
 };
 
-template <typename Iterator>
-struct positive_parse_result_t<Iterator, parsing_policy::drop_result> {
+template <>
+struct positive_parse_result_t<parsing_policy::drop_result> {
     size_t consumed;
 };
 
-template <typename Iterator, typename Policy> struct parse_result_mapper {
-    using type = positive_parse_result_t<Iterator, Policy>;
+template <typename Policy> struct parse_result_mapper {
+    using type = positive_parse_result_t<Policy>;
 };
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 using parse_result_mapper_t =
-    typename parse_result_mapper<Iterator, Policy>::type;
+    typename parse_result_mapper<Policy>::type;
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 using parse_result_t =
-    std::variant<not_enough_data_t, parse_result_mapper_t<Iterator, Policy>,
+    std::variant<not_enough_data_t, parse_result_mapper_t<Policy>,
                    protocol_error_t>;
 
 } // namespace bredis

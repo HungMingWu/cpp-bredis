@@ -26,7 +26,7 @@ TEST_CASE("protocol-error", "[connection]") {
         boost::asio::buffers_iterator<typename Buffer::const_buffers_type,
                                       char>;
     using Policy = r::parsing_policy::keep_result;
-    using ParseResult = r::positive_parse_result_t<Iterator, Policy>;
+    using ParseResult = r::positive_parse_result_t<Policy>;
     using result_t = void;
 
     std::chrono::milliseconds sleep_delay(1);

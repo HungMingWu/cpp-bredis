@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
         [&](const boost::system::error_code &ec, auto &&r) {
             assert(!ec);
             auto &replies =
-                std::get<r::markers::array_holder_t<Iterator>>(r.result);
+                std::get<r::markers::array_holder_t>(r.result);
             auto &last_reply = replies.elements.at(replies.elements.size() - 1);
             auto &str_reply =
                 std::get<r::markers::string_t>(last_reply);

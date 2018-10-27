@@ -41,7 +41,7 @@ TEST_CASE("ping", "[connection]") {
     r::Connection<next_layer_t> c(std::move(socket));
 
     Buffer rx_buff;
-    auto equality = r::marker_helpers::equality<Iterator>("PONG");
+    auto equality = r::marker_helpers::equality("PONG");
     c.write("ping");
     auto parse_result = c.read(rx_buff);
     REQUIRE(std::visit(equality, parse_result.result));

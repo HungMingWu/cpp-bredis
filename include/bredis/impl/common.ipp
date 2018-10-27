@@ -22,10 +22,9 @@
 
 namespace bredis {
 
-template <typename Iterator, typename Policy>
 struct consumed_parse {
-    int
-    operator()(const positive_parse_result_t<Iterator, Policy> &value) const {
+	template <typename Policy>
+    int operator()(const positive_parse_result_t<Policy> &value) const {
         return static_cast<int>(value.consumed);
     }
 
@@ -51,9 +50,10 @@ template <typename Iterator> class MatchResult {
         auto parse_from = begin;
         do {
             auto from = parse_from;
-            auto parse_result = Protocol::parse<Iterator, Policy>(from, end);
+			std::string_view view;
+            auto parse_result = Protocol::parse<Policy>(view);
             auto consumable = std::visit(
-                consumed_parse<Iterator, Policy>(), parse_result);
+                consumed_parse(), parse_result);
             if (consumable == -1) {
                 // parse error
                 consumed = 0;

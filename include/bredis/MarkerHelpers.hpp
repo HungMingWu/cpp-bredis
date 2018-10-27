@@ -20,7 +20,6 @@ namespace bredis {
 
 namespace marker_helpers {
 
-template <typename Iterator>
 struct stringizer {
 
     std::string operator()(const markers::string_t &value) const {
@@ -43,7 +42,7 @@ struct stringizer {
     }
 
     std::string
-    operator()(const markers::array_holder_t<Iterator> &value) const {
+    operator()(const markers::array_holder_t &value) const {
         std::string r = "[array] {";
         for (const auto &v : value.elements) {
             r += std::visit(*this, v) + ", ";
@@ -53,7 +52,6 @@ struct stringizer {
     }
 };
 
-template <typename Iterator>
 class equality {
     using StringIterator = std::string::const_iterator;
 
@@ -71,7 +69,7 @@ class equality {
     }
 
     bool operator()(const markers::string_t &value) const {
-        auto helper = stringizer<Iterator>();
+        auto helper = stringizer();
         auto str = helper(value);
         return std::equal(begin_, end_, value.begin(), value.end());
     }
@@ -99,7 +97,6 @@ class equality {
 // last (as we usually do not care)
 //
 
-template <typename Iterator>
 class check_subscription {
 
   private:
@@ -114,7 +111,7 @@ class check_subscription {
     }
 
     bool
-    operator()(const bredis::markers::array_holder_t<Iterator> &value) const {
+    operator()(const bredis::markers::array_holder_t &value) const {
         if ((value.elements.size() == 3) && (cmd_.arguments.size() >= 2)) {
             // check case-insentensive 1st argument, which chan be subscribe or
             // psubscribe

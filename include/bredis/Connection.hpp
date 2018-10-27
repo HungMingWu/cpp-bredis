@@ -27,8 +27,7 @@
 namespace bredis {
 
 #define BREDIS_PARSE_RESULT(B)                                                 \
-    positive_parse_result_t<typename to_iterator<B>::iterator_t,               \
-                            bredis::parsing_policy::keep_result>
+    positive_parse_result_t<bredis::parsing_policy::keep_result>
 
 template <typename NextLayer> class Connection {
 

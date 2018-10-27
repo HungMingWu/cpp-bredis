@@ -29,8 +29,8 @@ TEST_CASE("subscription", "[connection]") {
         boost::asio::buffers_iterator<typename Buffer::const_buffers_type,
                                       char>;
     using Policy = r::parsing_policy::keep_result;
-    using ParseResult = r::positive_parse_result_t<Iterator, Policy>;
-    using Extractor = r::extractor<Iterator>;
+    using ParseResult = r::positive_parse_result_t<Policy>;
+    using Extractor = r::extractor;
 
     using read_callback_t = std::function<void(
         const boost::system::error_code &error_code, ParseResult &&r)>;
@@ -63,7 +63,7 @@ TEST_CASE("subscription", "[connection]") {
         consumer.write(subscribe_cmd);
         auto parse_result = consumer.read(rx_buff);
 
-        r::marker_helpers::check_subscription<Iterator> check_subscription{
+        r::marker_helpers::check_subscription check_subscription{
             std::move(subscribe_cmd)};
         REQUIRE(std::visit(check_subscription, parse_result.result));
         rx_buff.consume(parse_result.consumed);
@@ -83,27 +83,27 @@ TEST_CASE("subscription", "[connection]") {
         producer.write(
             r::single_command_t("publish", "some-channel1", "message-a1"));
         auto s_result = producer.read(rx_buff);
-        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(
             r::single_command_t("publish", "some-channel1", "message-a2"));
         s_result = producer.read(rx_buff);
-        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(
             r::single_command_t("publish", "some-channel3", "message-c"));
         s_result = producer.read(rx_buff);
-        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("0"),
+        REQUIRE(std::visit(r::marker_helpers::equality("0"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
 
         producer.write(r::single_command_t("publish", "some-channel2", "last"));
         s_result = producer.read(rx_buff);
-        REQUIRE(std::visit(r::marker_helpers::equality<Iterator>("1"),
+        REQUIRE(std::visit(r::marker_helpers::equality("1"),
                                      s_result.result));
         rx_buff.consume(s_result.consumed);
     }

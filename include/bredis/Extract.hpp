@@ -45,14 +45,13 @@ struct array_holder_t {
 
 } // namespace extracts
 
-template <typename Iterator>
 struct extractor {
 
     extracts::extraction_result_t
     operator()(const markers::string_t &value) const {
         extracts::string_t r;
         r.str = std::string(value);
-	return r;
+		return r;
     }
 
     extracts::extraction_result_t
@@ -74,7 +73,7 @@ struct extractor {
     }
 
     extracts::extraction_result_t
-    operator()(const markers::array_holder_t<Iterator> &value) const {
+    operator()(const markers::array_holder_t &value) const {
         extracts::array_holder_t r;
         r.elements.reserve(value.elements.size());
         for (const auto &v : value.elements) {

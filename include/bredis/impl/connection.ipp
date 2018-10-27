@@ -101,11 +101,9 @@ Connection<NextLayer>::read(DynamicBuffer &rx_buff,
         return result_t{{}, 0};
     }
 
-    auto const_buff = rx_buff.data();
-    auto begin = Iterator::begin(const_buff);
-    auto end = Iterator::end(const_buff);
+	std::string_view view(boost::asio::buffer_cast<const char*>(rx_buff.data()), rx_buff.size());
 
-    auto parse_result = Protocol::parse(begin, end);
+    auto parse_result = Protocol::parse(view);
 
     if (auto *parse_error = std::get_if<protocol_error_t>(&parse_result); parse_error) {
         ec = *parse_error;

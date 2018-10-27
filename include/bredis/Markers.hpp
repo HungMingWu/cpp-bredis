@@ -18,15 +18,14 @@ struct error_t : public string_t {};
 struct int_t : public string_t {};
 struct nil_t : public string_t {};
 
-template <typename Iterator> struct array_holder_t;
+struct array_holder_t;
 
-template <typename Iterator>
 using redis_result_t =
     std::variant<int_t, string_t, error_t,
-                   nil_t, array_holder_t<Iterator>>;
+                   nil_t, array_holder_t>;
 
-template <typename Iterator> struct array_holder_t {
-    std::vector<redis_result_t<Iterator>> elements;
+struct array_holder_t {
+    std::vector<redis_result_t> elements;
 };
 
 } // namespace markers

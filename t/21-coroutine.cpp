@@ -52,7 +52,7 @@ TEST_CASE("ping", "[connection]") {
 
             auto parse_result = c.async_read(rx_buff, yield[error_code], 1);
             REQUIRE(!error_code);
-            auto extract = std::visit(r::extractor<Iterator>(),
+            auto extract = std::visit(r::extractor(),
                                                 parse_result.result);
             auto &reply_str = std::get<r::extracts::string_t>(extract);
             REQUIRE(reply_str.str == "PONG");

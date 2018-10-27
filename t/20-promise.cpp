@@ -52,7 +52,7 @@ TEST_CASE("ping", "[connection]") {
 
     auto parse_result = f_parse_result.get();
     auto extract =
-        std::visit(r::extractor<Iterator>(), parse_result.result);
+        std::visit(r::extractor(), parse_result.result);
     auto &reply_str = std::get<r::extracts::string_t>(extract);
     REQUIRE(reply_str.str == "PONG");
 

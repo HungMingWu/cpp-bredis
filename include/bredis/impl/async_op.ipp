@@ -61,21 +61,20 @@ operator()(boost::system::error_code error_code,
            std::size_t bytes_transferred) {
     using Iterator = typename to_iterator<DynamicBuffer>::iterator_t;
     using positive_result_t =
-        parse_result_mapper_t<Iterator, parsing_policy::keep_result>;
+        parse_result_mapper_t<parsing_policy::keep_result>;
 
     positive_result_t result;
 
     if (!error_code) {
         auto const_buff = rx_buff_.data();
-        auto begin = Iterator::begin(const_buff);
-        auto end = Iterator::end(const_buff);
+		std::string_view view(boost::asio::buffer_cast<const char*>(rx_buff_.data()), rx_buff_.size());
 
-        markers::array_holder_t<Iterator> results;
+        markers::array_holder_t results;
         results.elements.reserve(replies_count_);
         size_t cumulative_consumption = 0;
 
         do {
-            auto parse_result = Protocol::parse(begin, end);
+            auto parse_result = Protocol::parse(view);
             if (auto *parse_error = std::get_if<protocol_error_t>(&parse_result); parse_error) {
                 error_code = *parse_error;
                 break;
@@ -83,7 +82,7 @@ operator()(boost::system::error_code error_code,
                 auto &positive_result =
                     std::get<positive_result_t>(parse_result);
                 results.elements.emplace_back(positive_result.result);
-                begin += positive_result.consumed;
+                view = view.substr(positive_result.consumed);
                 cumulative_consumption += positive_result.consumed;
             }
         } while (results.elements.size() < replies_count_);

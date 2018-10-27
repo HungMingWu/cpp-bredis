@@ -7,8 +7,6 @@
 #pragma once
 
 #include <algorithm>
-#include <boost/asio/buffer.hpp>
-#include <boost/asio/buffers_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include <variant>
 #include <errno.h>
@@ -17,81 +15,32 @@
 
 namespace bredis {
 
-struct static_string_t {
-    const char *begin;
-    size_t size;
-
-    constexpr static_string_t(const char *ptr, size_t sz)
-        : begin{ptr}, size{sz} {}
-
-    template <typename Iterator>
-    Iterator search(Iterator first, Iterator last) const {
-        auto *end = begin + size;
-        for (;; ++first) {
-            Iterator it = first;
-            for (auto *s_it = begin;; ++it, ++s_it) {
-                if (s_it == end) {
-                    return first;
-                }
-                if (it == last) {
-                    return last;
-                }
-                if (!(*it == *s_it)) {
-                    break;
-                }
-            }
-        }
-    }
-
-    template <typename Iterator>
-    bool equal(Iterator first, Iterator last) const {
-        auto *start = begin;
-        auto *end = begin + size;
-
-        for (; (first != last) && (start != end); ++first, ++start) {
-            if (!(*first == *start)) {
-                return false;
-            }
-        }
-        return true;
-    }
-};
-
-template <typename T> T &operator<<(T &stream, const static_string_t &str) {
-    return stream << str.begin;
-}
-
 namespace {
-constexpr static_string_t terminator{"\r\n", 2};
+constexpr std::string_view terminator{"\r\n"};
 }
 
 namespace details {
 
 // forward declaration
-template <typename Iterator, typename Policy>
-parse_result_t<Iterator, Policy> raw_parse(const Iterator &from,
-                                           const Iterator &to);
+template <typename Policy>
+parse_result_t<Policy> raw_parse(std::string_view view);
 
 struct count_value_t {
     size_t value;
     size_t consumed;
 };
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 using count_variant_t =
-    std::variant<count_value_t, parse_result_t<Iterator, Policy>>;
+    std::variant<count_value_t, parse_result_t<Policy>>;
 
-template <typename Iterator, typename Policy> struct markup_helper_t {
-    using result_wrapper_t = parse_result_t<Iterator, Policy>;
-    using positive_wrapper_t = parse_result_mapper_t<Iterator, Policy>;
-    using result_t = markers::redis_result_t<Iterator>;
+template <typename Policy> struct markup_helper_t {
+    using result_wrapper_t = parse_result_t<Policy>;
+    using positive_wrapper_t = parse_result_mapper_t<Policy>;
+    using result_t = markers::redis_result_t;
     using string_t = markers::string_t;
 
-    static auto markup_string(size_t consumed, const Iterator &from,
-                              const Iterator &to) -> result_wrapper_t {
-        const char *view_from = (const char*)*from;
-        const char *view_to = (const char*)*to;;
-	auto view = std::string_view(view_from, view_to - view_from);
+    static auto markup_string(size_t consumed, std::string_view view) -> result_wrapper_t {
         return positive_wrapper_t{
             result_t{markers::string_t{view}}, consumed};
     }
@@ -117,15 +66,14 @@ template <typename Iterator, typename Policy> struct markup_helper_t {
     }
 };
 
-template <typename Iterator>
-struct markup_helper_t<Iterator, parsing_policy::drop_result> {
+template <>
+struct markup_helper_t<parsing_policy::drop_result> {
     using policy_t = parsing_policy::drop_result;
-    using result_wrapper_t = parse_result_t<Iterator, policy_t>;
-    using positive_wrapper_t = parse_result_mapper_t<Iterator, policy_t>;
+    using result_wrapper_t = parse_result_t<policy_t>;
+    using positive_wrapper_t = parse_result_mapper_t<policy_t>;
     using string_t = markers::string_t;
 
-    static auto markup_string(size_t consumed, const Iterator &from,
-                              const Iterator &to) -> result_wrapper_t {
+    static auto markup_string(size_t consumed, std::string_view view) -> result_wrapper_t {
         return positive_wrapper_t{consumed};
     }
 
@@ -145,11 +93,11 @@ struct markup_helper_t<Iterator, parsing_policy::drop_result> {
     }
 };
 
-template <typename Iterator, typename Policy> struct array_helper_t {
+template <typename Policy> struct array_helper_t {
     using policy_t = Policy;
-    using array_t = markers::array_holder_t<Iterator>;
-    using item_t = parse_result_mapper_t<Iterator, policy_t>;
-    using result_t = parse_result_t<Iterator, policy_t>;
+    using array_t = markers::array_holder_t;
+    using item_t = parse_result_mapper_t<policy_t>;
+    using result_t = parse_result_t<policy_t>;
 
     size_t consumed_;
     size_t count_;
@@ -168,12 +116,12 @@ template <typename Iterator, typename Policy> struct array_helper_t {
     result_t get() { return item_t{std::move(array_), consumed_}; }
 };
 
-template <typename Iterator>
-struct array_helper_t<Iterator, parsing_policy::drop_result> {
+template <>
+struct array_helper_t<parsing_policy::drop_result> {
     using policy_t = parsing_policy::drop_result;
-    using array_t = markers::array_holder_t<Iterator>;
-    using item_t = parse_result_mapper_t<Iterator, policy_t>;
-    using result_t = parse_result_t<Iterator, policy_t>;
+    using array_t = markers::array_holder_t;
+    using item_t = parse_result_mapper_t<policy_t>;
+    using result_t = parse_result_t<policy_t>;
 
     size_t consumed_;
 
@@ -184,12 +132,12 @@ struct array_helper_t<Iterator, parsing_policy::drop_result> {
     result_t get() { return result_t{item_t{consumed_}}; }
 };
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 struct unwrap_count_t {
-    using wrapped_result_t = count_variant_t<Iterator, Policy>;
-    using negative_result_t = parse_result_t<Iterator, Policy>;
+    using wrapped_result_t = count_variant_t<Policy>;
+    using negative_result_t = parse_result_t<Policy>;
     using positive_input_t =
-        parse_result_mapper_t<Iterator, parsing_policy::keep_result>;
+        parse_result_mapper_t<parsing_policy::keep_result>;
 
     template <typename T> wrapped_result_t operator()(const T &value) const {
         return negative_result_t{value};
@@ -197,7 +145,7 @@ struct unwrap_count_t {
 
     wrapped_result_t operator()(const positive_input_t &value) const {
         using string_t = markers::string_t;
-        using helper = markup_helper_t<Iterator, Policy>;
+        using helper = markup_helper_t<Policy>;
 
         auto &count_string_ref = std::get<string_t>(value.result);
         std::string count_string{count_string_ref};
@@ -221,152 +169,146 @@ struct unwrap_count_t {
     }
 };
 
-template <typename Iterator, typename Policy> struct string_parser_t {
-    static auto apply(const Iterator &from, const Iterator &to,
-                      size_t already_consumed)
-        -> parse_result_t<Iterator, Policy> {
-        using helper = markup_helper_t<Iterator, Policy>;
+template <typename Policy> struct string_parser_t {
 
-        auto found_terminator = terminator.search(from, to);
+    static auto apply(std::string_view view, size_t already_consumed)
+        -> parse_result_t<Policy> {
+        using helper = markup_helper_t<Policy>;
 
-        if (found_terminator == to) {
+		auto found_terminator = view.find(terminator);
+
+        if (found_terminator == std::string_view::npos) {
             return not_enough_data_t{};
         }
 
-        size_t consumed = already_consumed + terminator.size +
-                          std::distance(from, found_terminator);
-        return helper::markup_string(consumed, from, found_terminator);
+        size_t consumed = already_consumed + terminator.size() + found_terminator;
+        return helper::markup_string(consumed, view.substr(0, found_terminator));
     }
 };
 
-template <typename Iterator, typename Policy> struct error_parser_t {
-    static auto apply(const Iterator &from, const Iterator &to,
-                      size_t already_consumed)
-        -> parse_result_t<Iterator, Policy> {
-        using helper = markup_helper_t<Iterator, Policy>;
-        using parser_t = string_parser_t<Iterator, Policy>;
-        using wrapped_result_t = parse_result_mapper_t<Iterator, Policy>;
+template <typename Policy> struct error_parser_t {
+    static auto apply(std::string_view view, size_t already_consumed)
+        -> parse_result_t<Policy> {
+        using helper = markup_helper_t<Policy>;
+        using parser_t = string_parser_t<Policy>;
+        using wrapped_result_t = parse_result_mapper_t<Policy>;
 
-        auto result = parser_t::apply(from, to, already_consumed);
+        auto result = parser_t::apply(view, already_consumed);
         if (auto *wrapped_string = std::get_if<wrapped_result_t>(&result); !wrapped_string) {
             return result;
         } else {
-	    return helper::markup_error(*wrapped_string);
-	}
+	        return helper::markup_error(*wrapped_string);
+	    }
     }
 };
 
-template <typename Iterator, typename Policy> struct int_parser_t {
-    static auto apply(const Iterator &from, const Iterator &to,
-                      size_t already_consumed)
-        -> parse_result_t<Iterator, Policy> {
-        using helper = markup_helper_t<Iterator, Policy>;
-        using parser_t = string_parser_t<Iterator, Policy>;
-        using wrapped_result_t = parse_result_mapper_t<Iterator, Policy>;
+template <typename Policy> struct int_parser_t {
+    static auto apply(std::string_view view, size_t already_consumed)
+        -> parse_result_t<Policy> {
+        using helper = markup_helper_t<Policy>;
+        using parser_t = string_parser_t<Policy>;
+        using wrapped_result_t = parse_result_mapper_t<Policy>;
 
-        auto result = parser_t::apply(from, to, already_consumed);
+        auto result = parser_t::apply(view, already_consumed);
         if (auto *wrapped_string = std::get_if<wrapped_result_t>(&result); !wrapped_string) {
             return result;
         } else {
             return helper::markup_int(*wrapped_string);
-	}
+	    }
     }
 };
 
-template <typename Iterator, typename Policy> struct bulk_string_parser_t {
-    static auto apply(const Iterator &from, const Iterator &to,
-                      size_t already_consumed)
-        -> parse_result_t<Iterator, Policy> {
+template <typename Policy> struct bulk_string_parser_t {
 
-        using helper = markup_helper_t<Iterator, Policy>;
-        using count_unwrapper_t = unwrap_count_t<Iterator, Policy>;
+    static auto apply(std::string_view view, size_t already_consumed)
+        -> parse_result_t<Policy> {
+
+        using helper = markup_helper_t<Policy>;
+        using count_unwrapper_t = unwrap_count_t<Policy>;
         using keep_policy = parsing_policy::keep_result;
-        using count_parser_t = string_parser_t<Iterator, keep_policy>;
-        using result_t = parse_result_t<Iterator, Policy>;
+        using count_parser_t = string_parser_t<keep_policy>;
+        using result_t = parse_result_t<Policy>;
 
-        auto count_result = count_parser_t::apply(from, to, already_consumed);
+        auto count_result = count_parser_t::apply(view, already_consumed);
         auto count_int_result =
             std::visit(count_unwrapper_t{}, count_result);
         if (auto *count_wrapped = std::get_if<count_value_t>(&count_int_result); !count_wrapped) {
             return std::get<result_t>(count_int_result);
         } else {
-
-            auto head = from + (count_wrapped->consumed - already_consumed);
-            size_t left = std::distance(head, to);
+            auto head = count_wrapped->consumed - already_consumed;
+            size_t left = view.size() - head;
             size_t count = count_wrapped->value;
-            auto terminator_size = terminator.size;
+            auto terminator_size = terminator.size();
             if (left < count + terminator_size) {
                 return not_enough_data_t{};
             }
-            auto tail = head + count;
-            auto tail_end = tail + terminator_size;
+            auto tail = view.substr(head + count, terminator.size());
 
-            bool found_terminator = terminator.equal(tail, tail_end);
+			bool found_terminator = terminator == tail;
             if (!found_terminator) {
                 return protocol_error_t{
                     Error::make_error_code(bredis_errors::bulk_terminator)};
             }
             size_t consumed = count_wrapped->consumed + count + terminator_size;
 
-            return helper::markup_string(consumed, head, tail);
-	}
+			std::string_view view;// { head, count };
+            return helper::markup_string(consumed, view);
+		}
     }
 };
 
-template <typename Iterator, typename Policy> struct array_parser_t {
-    static auto apply(const Iterator &from, const Iterator &to,
-                      size_t already_consumed)
-        -> parse_result_t<Iterator, Policy> {
+template <typename Policy> struct array_parser_t {
+    static auto apply(std::string_view view, size_t already_consumed)
+        -> parse_result_t<Policy> {
 
-        using helper = markup_helper_t<Iterator, Policy>;
-        using count_unwrapper_t = unwrap_count_t<Iterator, Policy>;
-        using result_t = parse_result_t<Iterator, Policy>;
+        using helper = markup_helper_t<Policy>;
+        using count_unwrapper_t = unwrap_count_t<Policy>;
+        using result_t = parse_result_t<Policy>;
         using keep_policy = parsing_policy::keep_result;
-        using count_parser_t = string_parser_t<Iterator, keep_policy>;
-        using array_helper = array_helper_t<Iterator, Policy>;
-        using element_t = parse_result_mapper_t<Iterator, Policy>;
+        using count_parser_t = string_parser_t<keep_policy>;
+        using array_helper = array_helper_t<Policy>;
+        using element_t = parse_result_mapper_t<Policy>;
 
-        auto count_result = count_parser_t::apply(from, to, already_consumed);
+        auto count_result = count_parser_t::apply(view, already_consumed);
         auto count_int_result =
             std::visit(count_unwrapper_t{}, count_result);
         if (auto *count_wrapped = std::get_if<count_value_t>(&count_int_result); !count_wrapped) {
             return std::get<result_t>(count_int_result);
-        } else {
-            auto count = count_wrapped->value;
-            array_helper elements{count_wrapped->consumed, count};
-            long marked_elements{0};
-            Iterator element_from =
-                from + (count_wrapped->consumed - already_consumed);
-            while (marked_elements < count) {
-                auto element_result = raw_parse<Iterator, Policy>(element_from, to);
-                if (auto *element = std::get_if<element_t>(&element_result); !element) {
-                    return element_result;
-                } else {
-                    element_from += element->consumed;
-                    elements.push(*element);
-                    ++marked_elements;
 		}
-	    }
-            return elements.get();
-	}
+		else {
+			auto count = count_wrapped->value;
+			array_helper elements{ count_wrapped->consumed, count };
+			long marked_elements{ 0 };
+			auto element_from = count_wrapped->consumed - already_consumed;
+			while (marked_elements < count) {
+				auto element_result = raw_parse<Policy>(view.substr(element_from));
+				if (auto *element = std::get_if<element_t>(&element_result); !element) {
+					return element_result;
+				}
+				else {
+					element_from += element->consumed;
+					elements.push(*element);
+					++marked_elements;
+				}
+			}
+			return elements.get();
+		}
     }
 };
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 using primary_parser_t = std::variant<
-    not_enough_data_t, protocol_error_t, string_parser_t<Iterator, Policy>,
-    int_parser_t<Iterator, Policy>, error_parser_t<Iterator, Policy>,
-    bulk_string_parser_t<Iterator, Policy>, array_parser_t<Iterator, Policy>>;
+    not_enough_data_t, protocol_error_t, string_parser_t<Policy>,
+    int_parser_t<Policy>, error_parser_t<Policy>,
+    bulk_string_parser_t<Policy>, array_parser_t<Policy>>;
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 struct unwrap_primary_parser_t {
-    using wrapped_result_t = parse_result_t<Iterator, Policy>;
+    using wrapped_result_t = parse_result_t<Policy>;
 
-    const Iterator &from_;
-    const Iterator &to_;
-
-    unwrap_primary_parser_t(const Iterator &from, const Iterator &to)
-        : from_{from}, to_{to} {}
+	std::string_view from_;
+    unwrap_primary_parser_t(std::string_view from)
+        : from_{from} {}
 
     wrapped_result_t operator()(const not_enough_data_t &value) const {
         return value;
@@ -378,35 +320,34 @@ struct unwrap_primary_parser_t {
 
     template <typename Parser>
     wrapped_result_t operator()(const Parser &ignored) const {
-        auto next_from = from_ + 1;
-        return Parser::apply(next_from, to_, 1);
+        return Parser::apply(from_.substr(1), 1);
     }
 };
 
-template <typename Iterator, typename Policy>
+template <typename Policy>
 struct construct_primary_parcer_t {
-    using result_t = primary_parser_t<Iterator, Policy>;
+    using result_t = primary_parser_t<Policy>;
 
-    static auto apply(const Iterator &from, const Iterator &to) -> result_t {
-        if (from == to) {
+    static auto apply(std::string_view view) -> result_t {
+        if (view.empty()) {
             return not_enough_data_t{};
         }
 
-        switch (*from) {
+        switch (view[0]) {
         case '+': {
-            return string_parser_t<Iterator, Policy>{};
+            return string_parser_t<Policy>{};
         }
         case '-': {
-            return error_parser_t<Iterator, Policy>{};
+            return error_parser_t<Policy>{};
         }
         case ':': {
-            return int_parser_t<Iterator, Policy>{};
+            return int_parser_t<Policy>{};
         }
         case '$': {
-            return bulk_string_parser_t<Iterator, Policy>{};
+            return bulk_string_parser_t<Policy>{};
         }
         case '*': {
-            return array_parser_t<Iterator, Policy>{};
+            return array_parser_t<Policy>{};
         }
         }
         // wrong introduction;
@@ -415,21 +356,19 @@ struct construct_primary_parcer_t {
     }
 };
 
-template <typename Iterator, typename Policy>
-parse_result_t<Iterator, Policy> raw_parse(const Iterator &from,
-                                           const Iterator &to) {
+template <typename Policy>
+parse_result_t<Policy> raw_parse(std::string_view view) {
     auto primary =
-        construct_primary_parcer_t<Iterator, Policy>::apply(from, to);
+        construct_primary_parcer_t<Policy>::apply(view);
     return std::visit(
-        unwrap_primary_parser_t<Iterator, Policy>(from, to), primary);
+        unwrap_primary_parser_t<Policy>(view), primary);
 }
 
 } // namespace details
 
-template <typename Iterator, typename Policy>
-parse_result_t<Iterator, Policy> Protocol::parse(const Iterator &from,
-                                                 const Iterator &to) {
-    return details::raw_parse<Iterator, Policy>(from, to);
+template <typename Policy>
+parse_result_t<Policy> Protocol::parse(std::string_view view) {
+    return details::raw_parse<Policy>(view);
 }
 
 std::ostream &Protocol::serialize(std::ostream &buff,

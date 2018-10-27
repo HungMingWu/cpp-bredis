@@ -28,8 +28,8 @@ TEST_CASE("ping", "[connection]") {
         boost::asio::buffers_iterator<typename Buffer::const_buffers_type,
                                       char>;
     using Policy = r::parsing_policy::keep_result;
-    using ParseResult = r::positive_parse_result_t<Iterator, Policy>;
-    using Extractor = r::extractor<Iterator>;
+    using ParseResult = r::positive_parse_result_t<Policy>;
+    using Extractor = r::extractor;
 
     using result_t = void;
     using read_callback_t = std::function<void(

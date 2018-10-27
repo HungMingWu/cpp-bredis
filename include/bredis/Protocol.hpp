@@ -17,9 +17,8 @@ namespace bredis {
 
 class Protocol {
   public:
-    template <typename Iterator, typename Policy = parsing_policy::keep_result>
-    static inline parse_result_t<Iterator, Policy> parse(const Iterator &from,
-                                                         const Iterator &to);
+    template <typename Policy = parsing_policy::keep_result>
+	static inline parse_result_t<Policy> parse(std::string_view view);
 
     static inline std::ostream &serialize(std::ostream &buff,
                                           const single_command_t &cmd);
