@@ -37,7 +37,7 @@ TEST_CASE("ping", "[connection]") {
         boost::asio::buffers_iterator<typename Buffer::const_buffers_type,
                                       char>;
     using Policy = r::parsing_policy::keep_result;
-    using ParseResult = r::positive_parse_result_t<Iterator, Policy>;
+    using ParseResult = r::positive_parse_result_t<Policy>;
 
     using result_t = void;
     using read_callback_t = std::function<void(
@@ -81,12 +81,12 @@ TEST_CASE("ping", "[connection]") {
         rx_buff.consume(r.consumed);
 
         auto str = std::visit(
-            r::marker_helpers::stringizer<Iterator>(), r.result);
+            r::marker_helpers::stringizer(), r.result);
         BREDIS_LOG_DEBUG("result: " << str);
 
-        auto equality = r::marker_helpers::equality<Iterator>("PONG");
+        auto equality = r::marker_helpers::equality("PONG");
         auto &results =
-            std::get<r::markers::array_holder_t<Iterator>>(r.result);
+            std::get<r::markers::array_holder_t>(r.result);
         BREDIS_LOG_DEBUG("callback, size: " << results.elements.size());
         REQUIRE(results.elements.size() == count);
 
