@@ -251,7 +251,7 @@ template <typename Policy> struct bulk_string_parser_t {
             }
             size_t consumed = count_wrapped->consumed + count + terminator_size;
 
-			std::string_view view;// { head, count };
+			view = view.substr(head, count);
             return helper::markup_string(consumed, view);
 		}
     }
