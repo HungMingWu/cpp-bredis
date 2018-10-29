@@ -6,12 +6,10 @@
 //
 #pragma once
 
-#include <boost/asio/read_until.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/type_traits.hpp>
 #include <iostream>
 #include <locale>
 #include <sstream>
+#include <string>
 
 #ifdef BREDIS_DEBUG
 #define BREDIS_LOG_DEBUG(msg)                                                  \
@@ -33,6 +31,26 @@ struct consumed_parse {
     int operator()(const protocol_error_t &value) const { return -1; }
 };
 
+// todo:  change to std::basic_string_view<charT> in C++17
+template <typename charT> using basic_string_view_type = std::basic_string_view<charT>;
+
+// Creates a string view from a pair of iterators
+//  http://stackoverflow.com/q/33750600/882436
+template <typename _It>
+inline constexpr auto make_string_view( _It begin, _It end )
+{
+    using result_type = basic_string_view_type<typename std::iterator_traits<_It>::value_type>;
+
+    return result_type{
+        ( begin != end ) ? &*begin : nullptr
+        ,  (typename result_type::size_type)
+        std::max(
+            std::distance(begin, end)
+            , (typename result_type::difference_type)0
+        )
+     };
+}   // make_string_view
+
 template <typename Iterator> class MatchResult {
   private:
     std::size_t matched_results_;
@@ -50,7 +68,7 @@ template <typename Iterator> class MatchResult {
         auto parse_from = begin;
         do {
             auto from = parse_from;
-			std::string_view view;
+            auto view = make_string_view(begin, end);
             auto parse_result = Protocol::parse<Policy>(view);
             auto consumable = std::visit(
                 consumed_parse(), parse_result);
@@ -100,6 +118,6 @@ namespace asio {
 
 template <typename Iterator>
 struct is_match_condition<bredis::MatchResult<Iterator>>
-    : public boost::true_type {};
+    : public std::true_type {};
 }
 }

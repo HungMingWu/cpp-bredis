@@ -79,10 +79,6 @@ add_executable(t-05-protocol t/05-protocol.cpp)
 target_link_libraries(t-05-protocol ${LINK_DEPENDENCIES})
 add_test("t-05-protocol" t-05-protocol)
 
-add_executable(t-06-fragmented-buffer t/06-fragmented-buffer.cpp)
-target_link_libraries(t-06-fragmented-buffer ${LINK_DEPENDENCIES})
-add_test("t-06-fragmented-buffer" t-06-fragmented-buffer)
-
 add_executable(t-07-extract t/07-extract.cpp)
 target_link_libraries(t-07-extract ${LINK_DEPENDENCIES})
 add_test("t-07-extract" t-07-extract)
