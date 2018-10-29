@@ -49,22 +49,17 @@ struct extractor {
 
     extracts::extraction_result_t
     operator()(const markers::string_t &value) const {
-        extracts::string_t r;
-        r.str = std::string(value);
-		return r;
+	return extracts::string_t{ std::string(value) };
     }
 
     extracts::extraction_result_t
     operator()(const markers::error_t &value) const {
-        extracts::error_t r;
-        r.str = std::string(value);
-        return r;
+        return extracts::error_t{ std::string(value) };
     }
 
     extracts::extraction_result_t
     operator()(const markers::int_t &value) const {
-        std::string str = std::string(value);
-        return extracts::int_t{boost::lexical_cast<extracts::int_t>(str)};
+        return extracts::int_t{boost::lexical_cast<extracts::int_t>(std::string(value))};
     }
 
     extracts::extraction_result_t
